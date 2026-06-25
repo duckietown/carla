@@ -1,0 +1,10 @@
+# Here we keep a list of the Google Drive file id's of the Duckietown Content
+# files. The last id in the list is picked up by the Update.sh script to
+# download the last version of the contents.
+#
+# You can download it directly from
+#
+#     https://drive.google.com/open?id=PUT_FILE_ID_HERE
+
+1.0.0: 14TNT9bs7zRSPGNlbHDGaeBbtUziXq3TC
+Latest: 14TNT9bs7zRSPGNlbHDGaeBbtUziXq3TC

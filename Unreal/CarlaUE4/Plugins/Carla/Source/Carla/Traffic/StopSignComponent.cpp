@@ -202,6 +202,22 @@ void UStopSignComponent::InitializeSign(const carla::road::Map &Map)
   }
 }
 
+void UStopSignComponent::UseExistingStopBox(UBoxComponent* ExistingBox)
+{
+  for (UBoxComponent* Box : GetEffectTriggerVolume())
+  {
+    if (Box)
+    {
+      Box->DestroyComponent();
+    }
+  }
+  ClearEffectTriggerVolumes();
+
+  ExistingBox->OnComponentBeginOverlap.AddDynamic(this, &UStopSignComponent::OnOverlapBeginStopEffectBox);
+  ExistingBox->OnComponentEndOverlap.AddDynamic(this, &UStopSignComponent::OnOverlapEndStopEffectBox);
+  AddEffectTriggerVolume(ExistingBox);
+}
+
 void UStopSignComponent::GenerateStopBox(const FTransform BoxTransform,
     const FVector BoxSize)
 {

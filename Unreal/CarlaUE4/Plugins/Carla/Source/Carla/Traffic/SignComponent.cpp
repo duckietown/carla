@@ -119,6 +119,11 @@ void USignComponent::AddEffectTriggerVolume(UBoxComponent* TriggerVolume)
   EffectTriggerVolumes.Add(TriggerVolume);
 }
 
+void USignComponent::ClearEffectTriggerVolumes()
+{
+  EffectTriggerVolumes.Empty();
+}
+
 const TArray<UBoxComponent*> USignComponent::GetEffectTriggerVolume() const
 {
   return EffectTriggerVolumes;

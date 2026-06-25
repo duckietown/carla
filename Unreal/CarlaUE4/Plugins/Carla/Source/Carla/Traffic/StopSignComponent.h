@@ -20,6 +20,9 @@ public:
 
   virtual void InitializeSign(const carla::road::Map &Map) override;
 
+  // Replace road-computed stop boxes with an existing designer-placed box
+  void UseExistingStopBox(UBoxComponent* ExistingBox);
+
 private:
 
   void GenerateStopBox(const FTransform BoxTransform,

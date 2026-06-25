@@ -32,7 +32,7 @@ def print_status(destination, progress):
 
 
 def download_file_from_google_drive(id, destination):
-    # https://stackoverflow.com/a/39225039/5308925
+    import re
 
     def save_response_content(response, destination):
         chunk_size = 32768
@@ -46,23 +46,32 @@ def download_file_from_google_drive(id, destination):
                     print_status(destination, written_size)
         print('Done.')
 
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-
-        return None
-
-    url = "https://docs.google.com/uc?export=download"
-
     session = requests.Session()
 
+    # Initial request — may redirect to a virus-scan warning page for large files
+    url = "https://drive.google.com/uc?export=download"
     response = session.get(url, params={'id': id}, stream=True)
-    token = get_confirm_token(response)
 
-    if token:
-        params = {'id': id, 'confirm': token}
-        response = session.get(url, params=params, stream=True)
+    # Check for the large-file confirmation page (Google's current flow uses
+    # drive.usercontent.google.com with a uuid parameter)
+    content_type = response.headers.get('Content-Type', '')
+    if 'text/html' in content_type:
+        html = response.content.decode('utf-8', errors='replace')
+        uuid_match = re.search(r'name="uuid"\s+value="([^"]+)"', html)
+        if uuid_match:
+            uuid = uuid_match.group(1)
+            download_url = "https://drive.usercontent.google.com/download"
+            response = session.get(
+                download_url,
+                params={'id': id, 'export': 'download', 'confirm': 't', 'uuid': uuid},
+                stream=True)
+        else:
+            # Fallback: older cookie-based confirmation
+            token = next(
+                (v for k, v in response.cookies.items() if k.startswith('download_warning')),
+                None)
+            if token:
+                response = session.get(url, params={'id': id, 'confirm': token}, stream=True)
 
     save_response_content(response, destination)
 

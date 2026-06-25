@@ -48,6 +48,8 @@ public:
 
   void AddEffectTriggerVolume(UBoxComponent* TriggerVolume);
 
+  void ClearEffectTriggerVolumes();
+
   const TArray<UBoxComponent*> GetEffectTriggerVolume() const;
 
 protected:

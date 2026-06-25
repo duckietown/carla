@@ -228,7 +228,11 @@ if ${BUILD_CARLAUE4} ; then
   fi
 
   log "Build CarlaUE4 project."
-  make CarlaUE4Editor ARGS=""
+  if [ -f Makefile ]; then
+    make CarlaUE4Editor ARGS=""
+  else
+    ${UE4_ROOT}/Engine/Build/BatchFiles/Linux/Build.sh CarlaUE4Editor Linux Development -project="${PWD}/CarlaUE4.uproject" -game -engine
+  fi
 
   #Providing the user with the ExportedMaps folder
   EXPORTED_MAPS="${CARLAUE4_ROOT_FOLDER}/Content/Carla/ExportedMaps"

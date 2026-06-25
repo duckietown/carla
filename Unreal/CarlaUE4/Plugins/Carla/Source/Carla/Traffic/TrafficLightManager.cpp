@@ -729,6 +729,13 @@ void ATrafficLightManager::SpawnSignals()
       SignComponent->AttachToComponent(
           ClosestTrafficSign->GetRootComponent(),
           FAttachmentTransformRules::KeepRelativeTransform);
+      SignComponent->InitializeSign(GetMap().get());
+      UStopSignComponent* StopComp = Cast<UStopSignComponent>(SignComponent);
+      UBoxComponent* BlueprintBox = ClosestTrafficSign->GetTriggerVolume();
+      if (StopComp && BlueprintBox)
+      {
+        StopComp->UseExistingStopBox(BlueprintBox);
+      }
       TrafficSignComponents.Add(SignComponent->GetSignId(), SignComponent);
       TrafficSigns.Add(ClosestTrafficSign);
     }
