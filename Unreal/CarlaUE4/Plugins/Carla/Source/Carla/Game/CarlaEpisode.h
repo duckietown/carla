@@ -13,6 +13,7 @@
 #include "Carla/Settings/EpisodeSettings.h"
 #include "Carla/Util/ActorAttacher.h"
 #include "Carla/Weather/Weather.h"
+#include "Carla/HDRI/HDRIController.h"
 #include "Carla/Game/FrameData.h"
 #include "Carla/Sensor/SensorManager.h"
 
@@ -151,6 +152,14 @@ public:
   AWeather *GetWeather() const
   {
     return Weather;
+  }
+
+  /// Returns the HDRI controller for this map, or nullptr if the map does not
+  /// contain one (i.e. it does not support HDRI).
+  UFUNCTION(BlueprintCallable)
+  AHDRIController *GetHDRIController() const
+  {
+    return HDRIController;
   }
 
   const FActorRegistry &GetActorRegistry() const
@@ -392,6 +401,9 @@ private:
 
   UPROPERTY(VisibleAnywhere)
   AWeather *Weather = nullptr;
+
+  UPROPERTY(VisibleAnywhere)
+  AHDRIController *HDRIController = nullptr;
 
   UPROPERTY(VisibleAnywhere)
   UMaterialParameterCollectionInstance *MaterialParameters = nullptr;

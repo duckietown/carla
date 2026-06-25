@@ -25,6 +25,7 @@
 #include "carla/rpc/MapLayer.h"
 #include "carla/rpc/VehiclePhysicsControl.h"
 #include "carla/rpc/WeatherParameters.h"
+#include "carla/rpc/HDRIParameters.h"
 #include "carla/rpc/VehicleLightStateList.h"
 #include "carla/rpc/Texture.h"
 #include "carla/rpc/MaterialParameter.h"
@@ -97,6 +98,16 @@ namespace client {
 
     /// Change the weather in the simulation.
     void SetWeather(const rpc::WeatherParameters &weather);
+
+    /// Retrieve the HDRI lighting parameters currently active in the world.
+    /// @throw Throws if the current map does not support HDRI.
+    rpc::HDRIParameters GetHDRI() const;
+
+    /// Change the HDRI lighting in the simulation. Enabling HDRI hides the
+    /// regular sky so only the HDRIBackdrop lights the scene; a subsequent
+    /// SetWeather call automatically disables HDRI again.
+    /// @throw Throws if the current map does not support HDRI.
+    void SetHDRI(const rpc::HDRIParameters &hdri);
 
     /// Get Gravity value used for IMUI Sensor accelerometer calculation
     float GetIMUISensorGravity() const;

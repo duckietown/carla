@@ -175,4 +175,91 @@
     # --------------------------------------
     - def_name: __str__
     # --------------------------------------
+
+  - class_name: HDRIParameters
+    # - DESCRIPTION ------------------------
+    doc: >
+      Defines the HDRI (image-based) lighting state of a map, applied through carla.World.set_hdri. When enabled is True, the map's HDRIBackdrop drives all scene lighting and the regular sky/weather actor is hidden, so only the HDRI lights the scene. Calling carla.World.set_weather automatically disables HDRI again and restores the regular sky. HDRI is only available on maps that contain an HDRI controller and an HDRIBackdrop actor; using the HDRI API on an unsupported map raises a RuntimeError.
+    # - PROPERTIES -------------------------
+    instance_variables:
+    - var_name: enabled
+      type: bool
+      doc: >
+        Whether HDRI lighting is active. When True the HDRIBackdrop lights the scene and the regular sky is hidden; when False the regular sky/weather is used.
+    # --------------------------------------
+    - var_name: asset
+      type: str
+      doc: >
+        Name of the cubemap asset to use (e.g. 'HDRi_Neutral'), resolved against the server's default HDRI directory (/Game/Carla/Static/HDRi/). A full object path starting with / is also accepted. An empty string leaves the current cubemap unchanged.
+    # --------------------------------------
+    - var_name: intensity
+      type: float
+      doc: >
+        Lighting intensity of the HDRIBackdrop.
+    # --------------------------------------
+    - var_name: size
+      type: float
+      doc: >
+        Size (radius) of the HDRIBackdrop dome.
+    # --------------------------------------
+    - var_name: projection_center
+      type: carla.Vector3D
+      doc: >
+        World-space center used by the HDRIBackdrop for parallax-corrected projection.
+    # --------------------------------------
+    - var_name: location
+      type: carla.Vector3D
+      doc: >
+        World-space location (Unreal coordinates, in cm) at which the HDRIBackdrop actor is placed.
+    # - METHODS ----------------------------
+    methods:
+    - def_name: __init__
+      params:
+      - param_name: enabled
+        type: bool
+        default: 'False'
+        doc: >
+          Whether to enable HDRI lighting (hiding the regular sky).
+      - param_name: asset
+        type: str
+        default: ''
+        doc: >
+          Cubemap asset name resolved against the default HDRI directory. Empty leaves the current cubemap unchanged.
+      - param_name: intensity
+        type: float
+        default: '1.0'
+        doc: >
+          Lighting intensity of the HDRIBackdrop.
+      - param_name: size
+        type: float
+        default: '1000.0'
+        doc: >
+          Size (radius) of the HDRIBackdrop dome.
+      - param_name: projection_center
+        type: carla.Vector3D
+        doc: >
+          World-space projection center.
+      - param_name: location
+        type: carla.Vector3D
+        doc: >
+          World-space location (Unreal coordinates, cm) of the HDRIBackdrop actor.
+      doc: >
+        Method to initialize an object defining an HDRI lighting state.
+    # --------------------------------------
+    - def_name: __eq__
+      params:
+      - param_name: other
+      return: bool
+      doc: >
+        Returns <b>True</b> if both objects' variables are the same.
+    # --------------------------------------
+    - def_name: __ne__
+      params:
+      - param_name: other
+      return: bool
+      doc: >
+        Returns <b>True</b> if both objects' variables are different.
+    # --------------------------------------
+    - def_name: __str__
+    # --------------------------------------
 ...

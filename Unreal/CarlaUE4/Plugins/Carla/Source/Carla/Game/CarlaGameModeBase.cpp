@@ -11,6 +11,7 @@
 #include "Carla/Game/CarlaStaticDelegates.h"
 #include "Carla/Traffic/RoadSpline.h"
 #include "Carla/Lights/CarlaLight.h"
+#include "Carla/HDRI/HDRIController.h"
 #include "Engine/DecalActor.h"
 #include "Engine/LevelStreaming.h"
 #include "Engine/LocalPlayer.h"
@@ -146,6 +147,18 @@ void ACarlaGameModeBase::InitGame(
     Episode->Weather = World->SpawnActor<AWeather>(WeatherClass);
   } else {
     UE_LOG(LogCarla, Error, TEXT("Missing weather class!"));
+  }
+
+  // Discover the (optional) HDRI controller placed in the map. Maps without
+  // one simply do not support the HDRI API; the server returns an error when
+  // it is missing.
+  AActor* HDRIControllerActor =
+      UGameplayStatics::GetActorOfClass(GetWorld(), AHDRIController::StaticClass());
+  if (HDRIControllerActor != nullptr) {
+    Episode->HDRIController = static_cast<AHDRIController*>(HDRIControllerActor);
+    UE_LOG(LogCarla, Log, TEXT("Found HDRI controller actor. HDRI API enabled for this map."));
+  } else {
+    UE_LOG(LogCarla, Log, TEXT("No HDRI controller in this map. HDRI API disabled for this map."));
   }
 
   GameInstance->NotifyInitGame();

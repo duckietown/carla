@@ -4888,6 +4888,68 @@ class WeatherParameters:
     def __str__(self) -> str: ...
     # endregion
 
+class HDRIParameters:
+    """Defines the HDRI (image-based) lighting state of a map, applied through `carla.World.set_hdri`.
+
+    When `enabled` is True, the map's HDRIBackdrop drives all scene lighting and the regular sky/weather actor is hidden, so only the HDRI lights the scene. Calling `carla.World.set_weather` automatically disables HDRI again and restores the regular sky.
+
+    HDRI is only available on maps that contain an HDRI controller and an HDRIBackdrop actor. Using the HDRI API on an unsupported map raises a `RuntimeError`.
+    """
+
+    # region Instance Variables
+    @property
+    def enabled(self) -> bool:
+        """Whether HDRI lighting is active. When True the HDRIBackdrop lights the scene and the regular sky is hidden; when False the regular sky/weather is used."""
+
+    @property
+    def asset(self) -> str:
+        """Name of the cubemap asset to use (e.g. `'HDRi_Neutral'`), resolved against the server's default HDRI directory (`/Game/Carla/Static/HDRi/`). A full object path starting with `/` is also accepted. An empty string leaves the current cubemap unchanged."""
+
+    @property
+    def intensity(self) -> float:
+        """Lighting intensity of the HDRIBackdrop."""
+
+    @property
+    def size(self) -> float:
+        """Size (radius) of the HDRIBackdrop dome."""
+
+    @property
+    def projection_center(self) -> Vector3D:
+        """World-space center used by the HDRIBackdrop for parallax-corrected projection."""
+
+    @property
+    def location(self) -> Vector3D:
+        """World-space location (Unreal coordinates, in cm) at which the HDRIBackdrop actor is placed."""
+    # endregion
+
+    # region Methods
+    def __init__(
+        self,
+        enabled: bool = False,
+        asset: str = '',
+        intensity: float = 1.0,
+        size: float = 1000.0,
+        projection_center: Vector3D = Vector3D(),
+        location: Vector3D = Vector3D(),
+    ) -> None:
+        """Method to initialize an object defining an HDRI lighting state.
+
+        Args:
+            `enabled (bool, optional)`: Whether to enable HDRI lighting (hiding the regular sky). Defaults to False.\n
+            `asset (str, optional)`: Cubemap asset name resolved against the default HDRI directory, or a full asset path starting with '/'. Empty leaves the current cubemap unchanged. Defaults to ''.\n
+            `intensity (float, optional)`: Lighting intensity of the HDRIBackdrop. Defaults to 1.0.\n
+            `size (float, optional)`: Size (radius) of the HDRIBackdrop dome. Defaults to 1000.0.\n
+            `projection_center (carla.Vector3D, optional)`: World-space projection center. Defaults to Vector3D().\n
+            `location (carla.Vector3D, optional)`: World-space location (Unreal coordinates, cm) of the HDRIBackdrop actor. Defaults to Vector3D().
+        """
+    # endregion
+
+    # region Dunder Methods
+    def __eq__(self, other: HDRIParameters, /) -> bool: ...
+    def __ne__(self, other: HDRIParameters, /) -> bool: ...
+    def __str__(self) -> str: ...
+    # endregion
+
 class WheelPhysicsControl:
     """Class that defines specific physical parameters for wheel objects that will be part of a `carla.VehiclePhysicsControl` to simulate vehicle it as a material object."""
 
@@ -5283,6 +5345,14 @@ class World:
 
         + Setter: `carla.World.set_weather`
         """
+
+    def get_hdri(self) -> HDRIParameters:
+        """Retrieves an object describing the HDRI lighting state currently active in the simulation.
+
+        + Setter: `carla.World.set_hdri`
+
+        + Note: Only available on maps that support HDRI (containing an HDRI controller). Raises `RuntimeError` otherwise.
+        """
     # endregion
 
     # region Setters
@@ -5317,6 +5387,19 @@ class World:
 
         Args:
             `weather (WeatherParameters)`: New conditions to be applied.
+        """
+
+    def set_hdri(self, hdri: HDRIParameters):
+        """Changes the HDRI (image-based) lighting state of the simulation.
+
+        Enabling HDRI hides the regular sky/weather actor so that only the map's HDRIBackdrop lights the scene. Calling `carla.World.set_weather` afterwards automatically disables HDRI again and restores the regular sky.
+
+        + Getter: `carla.World.get_hdri`
+
+        + Note: Only available on maps that support HDRI (containing an HDRI controller and an HDRIBackdrop). Raises `RuntimeError` otherwise, or if the requested cubemap asset cannot be found.
+
+        Args:
+            `hdri (HDRIParameters)`: New HDRI state to be applied.
         """
     # endregion
 

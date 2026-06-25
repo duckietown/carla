@@ -8,6 +8,7 @@
 #include "Carla/HDRI/HDRIController.h"
 
 #include "Engine/TextureCube.h"
+#include "Components/SceneComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UnrealType.h"
 
@@ -23,6 +24,133 @@ AHDRIController::AHDRIController(const FObjectInitializer& ObjectInitializer)
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+bool AHDRIController::ApplyHDRI(const FHDRIParameters& Params)
+{
+  // Resolve the cubemap by name first. An empty name leaves the current
+  // cubemap unchanged; a non-empty name that fails to load is treated as an
+  // error so we never apply a half-configured state.
+  UTextureCube* CubeMap = nullptr;
+  if (!Params.Asset.IsEmpty())
+  {
+    CubeMap = LoadCubeMapByName(Params.Asset);
+    if (CubeMap == nullptr)
+    {
+      return false;
+    }
+  }
+
+  // Find an existing backdrop, otherwise spawn one *directly at the requested
+  // location*. Spawning at the target transform is what guarantees the
+  // placement: the HDRIBackdrop ships with Static-mobility components, so a
+  // runtime SetActorLocation on a backdrop spawned at the origin would be a
+  // no-op. The spawn transform, however, is always honoured.
+  if (!FindHDRIBackdrop())
+  {
+    UWorld* World = GetWorld();
+    if (World == nullptr)
+    {
+      return false;
+    }
+    CachedBackdrop = SpawnHDRIBackdrop(World, Params.Location);
+    if (CachedBackdrop == nullptr)
+    {
+      return false;
+    }
+  }
+
+  // Make sure the backdrop is visible again in case it was hidden by a
+  // previous DisableHDRI() call.
+  CachedBackdrop->SetActorHiddenInGame(false);
+
+  // Allow runtime repositioning (e.g. an already-spawned or editor-placed
+  // backdrop) by forcing the components Movable, then place the actor.
+  MakeBackdropMovable();
+  CachedBackdrop->SetActorLocation(Params.Location);
+
+  ApplyHDRIParameters(
+      CubeMap, Params.Size, Params.Intensity, Params.ProjectionCenter);
+
+  // Re-assert the location after ApplyHDRIParameters (which re-runs the
+  // construction script) so the transform is never clobbered.
+  CachedBackdrop->SetActorLocation(Params.Location);
+
+  if (!Params.Asset.IsEmpty())
+  {
+    CurrentAsset = Params.Asset;
+  }
+  bHDRIActive = true;
+  return true;
+}
+
+void AHDRIController::MakeBackdropMovable()
+{
+  if (CachedBackdrop == nullptr)
+  {
+    return;
+  }
+
+  TArray<USceneComponent*> SceneComponents;
+  CachedBackdrop->GetComponents<USceneComponent>(SceneComponents);
+  for (USceneComponent* Component : SceneComponents)
+  {
+    if (Component != nullptr &&
+        Component->Mobility != EComponentMobility::Movable)
+    {
+      Component->SetMobility(EComponentMobility::Movable);
+    }
+  }
+}
+
+void AHDRIController::DisableHDRI()
+{
+  bHDRIActive = false;
+  if (FindHDRIBackdrop())
+  {
+    // Hide the backdrop so it stops contributing to the scene; the caller
+    // restores the regular sky/weather actor.
+    CachedBackdrop->SetActorHiddenInGame(true);
+  }
+  UE_LOG(LogCarla, Log, TEXT("[HDRIController] HDRI mode disabled"));
+}
+
+FHDRIParameters AHDRIController::GetHDRIParameters() const
+{
+  FHDRIParameters Params;
+  Params.bEnabled = bHDRIActive;
+  Params.Asset = CurrentAsset;
+  if (CachedBackdrop != nullptr)
+  {
+    Params.Size = GetSize();
+    Params.Intensity = GetIntensity();
+    Params.ProjectionCenter = GetProjectionCenter();
+    Params.Location = CachedBackdrop->GetActorLocation();
+  }
+  return Params;
+}
+
+UTextureCube* AHDRIController::LoadCubeMapByName(const FString& Name) const
+{
+  // Default directory that ships the HDRI cubemaps. Names are resolved as
+  // "/Game/Carla/Static/HDRi/<Name>.<Name>". A name that already starts with
+  // '/' is treated as a full object path and used verbatim.
+  static const TCHAR* BaseDir = TEXT("/Game/Carla/Static/HDRi/");
+
+  FString ObjectPath = Name;
+  if (!Name.StartsWith(TEXT("/")))
+  {
+    ObjectPath = FString::Printf(TEXT("%s%s.%s"), BaseDir, *Name, *Name);
+  }
+
+  UTextureCube* CubeMap = LoadObject<UTextureCube>(nullptr, *ObjectPath);
+  if (CubeMap == nullptr)
+  {
+    UE_LOG(LogCarla, Error,
+        TEXT("[HDRIController] Could not load cubemap '%s' (resolved path '%s')"),
+        *Name, *ObjectPath);
+  }
+  return CubeMap;
+}
 
 void AHDRIController::ApplyHDRIParameters(
     UTextureCube* CubeMap,
@@ -168,10 +296,48 @@ bool AHDRIController::FindHDRIBackdrop()
     }
   }
 
-  UE_LOG(LogCarla, Error,
-      TEXT("[HDRIController] No HDRIBackdrop actor found in the scene"));
+  // None present. Spawning is handled by the caller (ApplyHDRI), so that the
+  // backdrop can be spawned at the requested transform.
   CachedBackdrop = nullptr;
   return false;
+}
+
+AActor* AHDRIController::SpawnHDRIBackdrop(UWorld* World, const FVector& Location)
+{
+  // Generated Blueprint class shipped by the engine's HDRIBackdrop plugin.
+  static const TCHAR* BackdropClassPath =
+      TEXT("/HDRIBackdrop/Blueprints/HDRIBackdrop.HDRIBackdrop_C");
+
+  UClass* BackdropClass = LoadClass<AActor>(nullptr, BackdropClassPath);
+  if (BackdropClass == nullptr)
+  {
+    UE_LOG(LogCarla, Error,
+        TEXT("[HDRIController] Could not load HDRIBackdrop class '%s'. "
+             "Is the HDRIBackdrop plugin enabled?"),
+        BackdropClassPath);
+    return nullptr;
+  }
+
+  // Spawn directly at the requested transform so the placement holds even if
+  // the backdrop's components use Static mobility.
+  FActorSpawnParameters SpawnParams;
+  SpawnParams.SpawnCollisionHandlingOverride =
+      ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+  AActor* Spawned = World->SpawnActor<AActor>(
+      BackdropClass, FTransform(Location), SpawnParams);
+
+  if (Spawned == nullptr)
+  {
+    UE_LOG(LogCarla, Error,
+        TEXT("[HDRIController] Failed to spawn HDRIBackdrop actor"));
+    return nullptr;
+  }
+
+  UE_LOG(LogCarla, Log,
+      TEXT("[HDRIController] Spawned HDRIBackdrop actor at (%.1f, %.1f, %.1f) "
+           "(none present in map)"),
+      Location.X, Location.Y, Location.Z);
+  return Spawned;
 }
 
 bool AHDRIController::SetFloatProperty(const FName& PropertyName, float Value)

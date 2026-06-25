@@ -84,6 +84,7 @@
 #include <carla/rpc/WalkerControl.h>
 #include <carla/rpc/VehicleWheels.h>
 #include <carla/rpc/WeatherParameters.h>
+#include <carla/rpc/HDRIParameters.h>
 #include <carla/streaming/detail/Types.h>
 #include <carla/rpc/Texture.h>
 #include <carla/rpc/MaterialParameter.h>
@@ -892,10 +893,67 @@ void FCarlaServer::FPimpl::BindActions()
     {
       RESPOND_ERROR("internal error: unable to find weather");
     }
+    // Weather always wins over HDRI: changing the weather tears down HDRI mode
+    // and restores the regular sky so the new weather is visible.
+    auto *HDRI = Episode->GetHDRIController();
+    if (HDRI != nullptr && HDRI->IsHDRIActive())
+    {
+      HDRI->DisableHDRI();
+      Weather->SetHDRIMode(false);
+    }
     Weather->ApplyWeather(weather);
     return R<void>::Success();
   };
-  
+
+  // ~~ HDRI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  BIND_SYNC(get_hdri_parameters) << [this]() -> R<cr::HDRIParameters>
+  {
+    REQUIRE_CARLA_EPISODE();
+    auto *HDRI = Episode->GetHDRIController();
+    if (HDRI == nullptr)
+    {
+      RESPOND_ERROR("this map does not support HDRI (no HDRI controller found)");
+    }
+    return cr::HDRIParameters(HDRI->GetHDRIParameters());
+  };
+
+  BIND_SYNC(set_hdri_parameters) << [this](
+      const cr::HDRIParameters &hdri) -> R<void>
+  {
+    REQUIRE_CARLA_EPISODE();
+    auto *HDRI = Episode->GetHDRIController();
+    if (HDRI == nullptr)
+    {
+      RESPOND_ERROR("this map does not support HDRI (no HDRI controller found)");
+    }
+    auto *Weather = Episode->GetWeather();
+    if (hdri.enabled)
+    {
+      const FHDRIParameters Params = hdri;
+      if (!HDRI->ApplyHDRI(Params))
+      {
+        RESPOND_ERROR("unable to enable HDRI: the HDRIBackdrop could not be "
+            "created (is the HDRIBackdrop plugin enabled?) or the requested "
+            "cubemap asset could not be loaded");
+      }
+      // Hide the regular sky/weather actor so only the HDRI lights the scene.
+      if (Weather != nullptr)
+      {
+        Weather->SetHDRIMode(true);
+      }
+    }
+    else
+    {
+      HDRI->DisableHDRI();
+      if (Weather != nullptr)
+      {
+        Weather->SetHDRIMode(false);
+      }
+    }
+    return R<void>::Success();
+  };
+
   // -- IMUI Gravity ---------------------------------------------------------
   
   BIND_SYNC(get_imui_gravity) << [this]() -> R<float>

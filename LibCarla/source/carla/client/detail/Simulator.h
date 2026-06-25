@@ -264,6 +264,14 @@ namespace detail {
       _client.SetWeatherParameters(weather);
     }
 
+    rpc::HDRIParameters GetHDRIParameters() {
+      return _client.GetHDRIParameters();
+    }
+
+    void SetHDRIParameters(const rpc::HDRIParameters &hdri) {
+      _client.SetHDRIParameters(hdri);
+    }
+
     float GetIMUISensorGravity() const {
       return _client.GetIMUISensorGravity();
     }

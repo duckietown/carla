@@ -371,6 +371,8 @@ void export_world() {
     .def("apply_settings", &ApplySettings, (arg("settings"), arg("seconds")=0.0))
     .def("get_weather", CONST_CALL_WITHOUT_GIL(cc::World, GetWeather))
     .def("set_weather", &cc::World::SetWeather)
+    .def("get_hdri", CONST_CALL_WITHOUT_GIL(cc::World, GetHDRI))
+    .def("set_hdri", &cc::World::SetHDRI, (arg("hdri")))
     .def("get_imui_sensor_gravity", CONST_CALL_WITHOUT_GIL(cc::World, GetIMUISensorGravity))
     .def("set_imui_sensor_gravity", &cc::World::SetIMUISensorGravity, (arg("NewIMUISensorGravity")) )
     .def("get_snapshot", &cc::World::GetSnapshot)
