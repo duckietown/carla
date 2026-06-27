@@ -893,8 +893,6 @@ void FCarlaServer::FPimpl::BindActions()
     {
       RESPOND_ERROR("internal error: unable to find weather");
     }
-    // Weather always wins over HDRI: changing the weather tears down HDRI mode
-    // and restores the regular sky so the new weather is visible.
     auto *HDRI = Episode->GetHDRIController();
     if (HDRI != nullptr && HDRI->IsHDRIActive())
     {
@@ -904,9 +902,8 @@ void FCarlaServer::FPimpl::BindActions()
     Weather->ApplyWeather(weather);
     return R<void>::Success();
   };
-
-  // ~~ HDRI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+  
+  // ~~ HDRI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   BIND_SYNC(get_hdri_parameters) << [this]() -> R<cr::HDRIParameters>
   {
     REQUIRE_CARLA_EPISODE();
@@ -937,7 +934,6 @@ void FCarlaServer::FPimpl::BindActions()
             "created (is the HDRIBackdrop plugin enabled?) or the requested "
             "cubemap asset could not be loaded");
       }
-      // Hide the regular sky/weather actor so only the HDRI lights the scene.
       if (Weather != nullptr)
       {
         Weather->SetHDRIMode(true);

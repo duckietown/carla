@@ -154,8 +154,6 @@ public:
     return Weather;
   }
 
-  /// Returns the HDRI controller for this map, or nullptr if the map does not
-  /// contain one (i.e. it does not support HDRI).
   UFUNCTION(BlueprintCallable)
   AHDRIController *GetHDRIController() const
   {

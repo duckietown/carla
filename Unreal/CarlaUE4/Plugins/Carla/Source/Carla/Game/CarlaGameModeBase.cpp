@@ -149,9 +149,6 @@ void ACarlaGameModeBase::InitGame(
     UE_LOG(LogCarla, Error, TEXT("Missing weather class!"));
   }
 
-  // Discover the (optional) HDRI controller placed in the map. Maps without
-  // one simply do not support the HDRI API; the server returns an error when
-  // it is missing.
   AActor* HDRIControllerActor =
       UGameplayStatics::GetActorOfClass(GetWorld(), AHDRIController::StaticClass());
   if (HDRIControllerActor != nullptr) {

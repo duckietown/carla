@@ -749,7 +749,7 @@
     - def_name: get_hdri
       return: carla.HDRIParameters
       doc: >
-        Retrieves an object describing the HDRI lighting state currently active in the simulation. Only available on maps that support HDRI (containing an HDRI controller); raises a RuntimeError otherwise.
+        Retrieves the HDRI lighting state currently active in the simulation. Only available on maps that support HDRI; raises a RuntimeError otherwise.
     # --------------------------------------
     - def_name: set_hdri
       params:
@@ -758,7 +758,7 @@
         doc: >
           New HDRI state to be applied.
       doc: >
-        Changes the HDRI (image-based) lighting state of the simulation. Enabling HDRI hides the regular sky/weather actor so that only the map's HDRIBackdrop lights the scene; calling set_weather afterwards automatically disables HDRI again and restores the regular sky. Only available on maps that support HDRI (containing an HDRI controller and an HDRIBackdrop); raises a RuntimeError otherwise, or if the requested cubemap asset cannot be found.
+        Changes the HDRI (image-based) lighting state of the simulation. Enabling HDRI hides the regular sky so that only the map's HDRIBackdrop lights the scene; calling set_weather afterwards disables HDRI again. Only available on maps that support HDRI; raises a RuntimeError otherwise, or if the cubemap asset cannot be found.
     # --------------------------------------
     - def_name: cast_ray
       return: list(carla.LabelledPoint)

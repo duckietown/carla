@@ -6,37 +6,14 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
-"""
-CARLA HDRI control:
+"""Control image-based (HDRI) lighting for the current CARLA map.
 
-Connect to a CARLA Simulator instance and control image-based (HDRI) lighting
-for the current map.
+Only available on maps that support HDRI; on other maps the API raises a
+RuntimeError, which this example reports before exiting.
 
-When HDRI is enabled, the map's HDRIBackdrop drives all scene lighting and the
-regular sky/weather actor (BP_Sky) is hidden so that only the HDRI lights the
-scene. Calling ``world.set_weather(...)`` automatically disables HDRI again and
-restores the regular sky.
-
-HDRI is only available on maps that contain an HDRI controller actor. On any
-other map the HDRI API raises a ``RuntimeError``; this example reports that and
-exits cleanly.
-
-Examples:
-
-    # Enable HDRI with the default neutral cubemap
-    python hdri_control.py --enable
-
-    # Enable HDRI with a specific cubemap and intensity
     python hdri_control.py --enable --asset HDRi_Neutral --intensity 1.5
-
-    # Disable HDRI again (restores the regular sky)
     python hdri_control.py --disable
-
-    # Show the HDRI state currently active on the map
     python hdri_control.py --status
-
-    # Demonstrate the "weather wins" behaviour: enabling HDRI, then changing
-    # the weather, which automatically turns HDRI back off.
     python hdri_control.py --demo
 """
 
@@ -149,13 +126,11 @@ def main():
                 projection_center=projection_center,
                 location=location))
             print_status(world)
-            print("\nNow changing the weather to ClearNoon — this should "
-                  "automatically disable HDRI and restore the sky...")
+            print("\nChanging the weather to ClearNoon (auto-disables HDRI)...")
             world.set_weather(carla.WeatherParameters.ClearNoon)
             print_status(world)
             return
 
-        # Default action (and --enable) enables HDRI.
         world.set_hdri(carla.HDRIParameters(
             enabled=True,
             asset=args.asset,
@@ -168,8 +143,6 @@ def main():
         print_status(world)
 
     except RuntimeError as error:
-        # Raised when the current map does not support HDRI (no HDRI controller),
-        # or when the requested cubemap asset could not be found.
         print("HDRI request failed: {}".format(error), file=sys.stderr)
         sys.exit(1)
 

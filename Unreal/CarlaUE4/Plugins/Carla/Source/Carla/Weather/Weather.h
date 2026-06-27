@@ -51,13 +51,8 @@ public:
   /// Update the day night cycle
   void SetDayNightCycle(const bool &active);
 
-  /// Enable or disable "HDRI mode". While active, this actor (the sky/weather
-  /// BP_Sky) is hidden and its directional light, sky light and sky atmosphere
-  /// are disabled so that only the HDRIBackdrop lights the scene. Disabling
-  /// restores them. Used by the HDRI Python API.
   void SetHDRIMode(bool bEnable);
 
-  /// Whether HDRI mode is currently active on this weather actor.
   bool IsHDRIModeActive() const { return bHDRIModeActive; }
 
 protected:
@@ -69,12 +64,12 @@ private:
 
   void CheckWeatherPostProcessEffects();
 
-  /// Hide or show this actor and its entire attached / child-actor hierarchy
-  /// (sky mesh, sun, sky light, sky atmosphere). Used to turn the regular sky
-  /// off and on for HDRI mode.
-  void SetSkyHierarchyHidden(bool bHidden);
+  AActor* FindSkyActor();
 
   bool bHDRIModeActive = false;
+
+  UPROPERTY()
+  AActor* CachedSkyActor = nullptr;
 
   UPROPERTY(VisibleAnywhere)
   FWeatherParameters Weather;

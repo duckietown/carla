@@ -8,12 +8,7 @@
 
 #include "HDRIParameters.generated.h"
 
-/// Parameters that describe the HDRI lighting state of a map.
-///
-/// When bEnabled is true the HDRIBackdrop drives all scene lighting and the
-/// regular sky/weather actor (BP_Sky) is hidden. Asset is the name of a
-/// UTextureCube located in the default HDRI asset directory (resolved
-/// server-side); an empty Asset leaves the current cubemap unchanged.
+// -- HDRI --------------------------------------------------------------------
 USTRUCT(BlueprintType)
 struct CARLA_API FHDRIParameters
 {

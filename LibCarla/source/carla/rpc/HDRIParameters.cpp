@@ -11,19 +11,19 @@
 namespace carla {
 namespace rpc {
 
-  std::ostream &operator<<(std::ostream &out, const HDRIParameters &hdri) {
-    out << "HDRIParameters(enabled=" << (hdri.enabled ? "True" : "False")
-        << ", asset=" << hdri.asset
-        << ", intensity=" << std::to_string(hdri.intensity)
-        << ", size=" << std::to_string(hdri.size)
-        << ", projection_center=(" << std::to_string(hdri.projection_center.x)
-        << ", " << std::to_string(hdri.projection_center.y)
-        << ", " << std::to_string(hdri.projection_center.z) << ")"
-        << ", location=(" << std::to_string(hdri.location.x)
-        << ", " << std::to_string(hdri.location.y)
-        << ", " << std::to_string(hdri.location.z) << "))";
-    return out;
-  }
+std::ostream &operator<<(std::ostream &out, const HDRIParameters &hdri) {
+  out << "HDRIParameters(enabled=" << (hdri.enabled ? "True" : "False")
+      << ", asset=" << hdri.asset
+      << ", intensity=" << std::to_string(hdri.intensity)
+      << ", size=" << std::to_string(hdri.size) << ", projection_center=("
+      << std::to_string(hdri.projection_center.x) << ", "
+      << std::to_string(hdri.projection_center.y) << ", "
+      << std::to_string(hdri.projection_center.z) << ")"
+      << ", location=(" << std::to_string(hdri.location.x) << ", "
+      << std::to_string(hdri.location.y) << ", "
+      << std::to_string(hdri.location.z) << "))";
+  return out;
+}
 
 } // namespace rpc
 } // namespace carla

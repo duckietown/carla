@@ -8,7 +8,6 @@
 #include "Carla/Weather/Weather.h"
 #include "Carla/Sensor/SceneCaptureCamera.h"
 #include "Components/SceneCaptureComponent2D.h"
-#include "Components/ChildActorComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "ConstructorHelpers.h"
 #include "Carla/Game/CarlaStatics.h"
@@ -125,46 +124,32 @@ void AWeather::SetHDRIMode(bool bEnable)
     }
     bHDRIModeActive = bEnable;
 
-    // Hide the whole BP_Sky actor hierarchy so that, while HDRI mode is active,
-    // only the HDRIBackdrop lights the scene. Hiding just this actor is not
-    // enough because BP_Sky wraps its directional light (sun) and sky light in
-    // child / attached actors, so we hide those too.
-    SetSkyHierarchyHidden(bEnable);
+    SetActorHiddenInGame(bEnable);
+    if (AActor* SkyActor = FindSkyActor())
+    {
+        SkyActor->SetActorHiddenInGame(bEnable);
+    }
 
     UE_LOG(LogCarla, Log, TEXT("[Weather] HDRI mode %s"),
         bEnable ? TEXT("enabled (sky hidden)") : TEXT("disabled (sky restored)"));
 }
 
-void AWeather::SetSkyHierarchyHidden(bool bHidden)
+AActor* AWeather::FindSkyActor()
 {
-    // Gather this actor plus any attached / child actors so we hide the entire
-    // BP_Sky hierarchy (sky mesh, sun, sky light, sky atmosphere).
-    TArray<AActor*> Actors;
-    GetAttachedActors(Actors);
-    Actors.AddUnique(this);
-
-    for (int32 Index = 0; Index < Actors.Num(); ++Index)
+    if (CachedSkyActor != nullptr)
     {
-        AActor* Actor = Actors[Index];
-        if (Actor == nullptr)
-        {
-            continue;
-        }
-
-        // Follow child-actor components so wrapped actors are hidden as well.
-        TArray<UActorComponent*> Components;
-        Actor->GetComponents(Components);
-        for (UActorComponent* Component : Components)
-        {
-            if (UChildActorComponent* ChildComp = Cast<UChildActorComponent>(Component))
-            {
-                if (AActor* ChildActor = ChildComp->GetChildActor())
-                {
-                    Actors.AddUnique(ChildActor);
-                }
-            }
-        }
-
-        Actor->SetActorHiddenInGame(bHidden);
+        return CachedSkyActor;
     }
+
+    TArray<AActor*> Actors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
+    for (AActor* Actor : Actors)
+    {
+        if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
+        {
+            CachedSkyActor = Actor;
+            break;
+        }
+    }
+    return CachedSkyActor;
 }
