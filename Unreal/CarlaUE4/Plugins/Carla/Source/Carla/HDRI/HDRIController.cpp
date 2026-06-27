@@ -9,6 +9,7 @@
 
 #include "Engine/TextureCube.h"
 #include "Components/SceneComponent.h"
+#include "Components/LightComponentBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UnrealType.h"
 
@@ -54,6 +55,9 @@ bool AHDRIController::ApplyHDRI(const FHDRIParameters& Params)
   {
     CurrentAsset = Params.Asset;
   }
+
+  SetSkyHidden(true);
+
   bHDRIActive = true;
   return true;
 }
@@ -74,6 +78,57 @@ void AHDRIController::DisableHDRI()
   if (FindHDRIBackdrop())
   {
     CachedBackdrop->SetActorHiddenInGame(true);
+  }
+
+  // Restore Carla's sky and its lights.
+  SetSkyHidden(false);
+}
+
+AActor* AHDRIController::FindSkyActor()
+{
+  if (IsValid(CachedSkyActor))
+  {
+    return CachedSkyActor;
+  }
+
+  TArray<AActor*> Actors;
+  UGameplayStatics::GetAllActorsOfClass(
+      GetWorld(), AActor::StaticClass(), Actors);
+  for (AActor* Actor : Actors)
+  {
+    if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
+    {
+      CachedSkyActor = Actor;
+      break;
+    }
+  }
+  return CachedSkyActor;
+}
+
+void AHDRIController::SetSkyHidden(bool bHidden)
+{
+  AActor* SkyActor = FindSkyActor();
+  if (SkyActor == nullptr)
+  {
+    UE_LOG(LogCarla, Warning,
+        TEXT("[HDRIController] BP_Sky_C not found; cannot toggle Carla sky."));
+    return;
+  }
+
+  SkyActor->SetActorHiddenInGame(bHidden);
+
+  TArray<AActor*> SkyActors;
+  SkyActors.Add(SkyActor);
+  SkyActor->GetAttachedActors(SkyActors, /*bResetArray=*/false);
+
+  for (AActor* Actor : SkyActors)
+  {
+    TArray<ULightComponentBase*> Lights;
+    Actor->GetComponents<ULightComponentBase>(Lights);
+    for (ULightComponentBase* Light : Lights)
+    {
+      Light->SetVisibility(!bHidden, true);
+    }
   }
 }
 

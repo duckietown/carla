@@ -55,6 +55,10 @@ private:
 
   AActor* SpawnHDRIBackdrop(const FVector& Location);
 
+  AActor* FindSkyActor();
+
+  void SetSkyHidden(bool bHidden);
+
   void MakeBackdropMovable();
 
   UTextureCube* LoadCubeMapByName(const FString& Name) const;
@@ -66,6 +70,9 @@ private:
 
   UPROPERTY()
   AActor* CachedBackdrop = nullptr;
+
+  UPROPERTY()
+  AActor* CachedSkyActor = nullptr;
 
   UPROPERTY()
   bool bHDRIActive = false;
