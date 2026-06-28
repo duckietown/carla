@@ -33,7 +33,6 @@
 #include "carla/rpc/VehicleTelemetryData.h"
 #include "carla/rpc/VehicleWheels.h"
 #include "carla/rpc/WeatherParameters.h"
-#include "carla/rpc/HDRIParameters.h"
 #include "carla/rpc/Texture.h"
 #include "carla/rpc/MaterialParameter.h"
 
@@ -160,9 +159,9 @@ namespace detail {
 
     void SetWeatherParameters(const rpc::WeatherParameters &weather);
 
-    rpc::HDRIParameters GetHDRIParameters();
+    void SetHDRIPreset(const std::string &preset);
 
-    void SetHDRIParameters(const rpc::HDRIParameters &hdri);
+    std::vector<std::string> GetHDRIPresets();
 
     float GetIMUISensorGravity() const;
 

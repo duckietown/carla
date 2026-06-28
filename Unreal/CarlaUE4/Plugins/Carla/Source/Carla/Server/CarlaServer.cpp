@@ -84,7 +84,6 @@
 #include <carla/rpc/WalkerControl.h>
 #include <carla/rpc/VehicleWheels.h>
 #include <carla/rpc/WeatherParameters.h>
-#include <carla/rpc/HDRIParameters.h>
 #include <carla/streaming/detail/Types.h>
 #include <carla/rpc/Texture.h>
 #include <carla/rpc/MaterialParameter.h>
@@ -904,19 +903,7 @@ void FCarlaServer::FPimpl::BindActions()
   };
   
   // ~~ HDRI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  BIND_SYNC(get_hdri_parameters) << [this]() -> R<cr::HDRIParameters>
-  {
-    REQUIRE_CARLA_EPISODE();
-    auto *HDRI = Episode->GetHDRIController();
-    if (HDRI == nullptr)
-    {
-      RESPOND_ERROR("this map does not support HDRI (no HDRI controller found)");
-    }
-    return cr::HDRIParameters(HDRI->GetHDRIParameters());
-  };
-
-  BIND_SYNC(set_hdri_parameters) << [this](
-      const cr::HDRIParameters &hdri) -> R<void>
+  BIND_SYNC(set_hdri_preset) << [this](std::string preset) -> R<void>
   {
     REQUIRE_CARLA_EPISODE();
     auto *HDRI = Episode->GetHDRIController();
@@ -925,29 +912,44 @@ void FCarlaServer::FPimpl::BindActions()
       RESPOND_ERROR("this map does not support HDRI (no HDRI controller found)");
     }
     auto *Weather = Episode->GetWeather();
-    if (hdri.enabled)
-    {
-      const FHDRIParameters Params = hdri;
-      if (!HDRI->ApplyHDRI(Params))
-      {
-        RESPOND_ERROR("unable to enable HDRI: the HDRIBackdrop could not be "
-            "created (is the HDRIBackdrop plugin enabled?) or the requested "
-            "cubemap asset could not be loaded");
-      }
-      if (Weather != nullptr)
-      {
-        Weather->SetHDRIMode(true);
-      }
-    }
-    else
+
+    // disable weather
+    if (preset.empty())
     {
       HDRI->DisableHDRI();
       if (Weather != nullptr)
       {
         Weather->SetHDRIMode(false);
       }
+      return R<void>::Success();
+    }
+
+    if (!HDRI->ApplyHDRIByName(FString(preset.c_str())))
+    {
+      RESPOND_ERROR("unable to apply HDRI preset: no preset with that name in "
+          "this map, or its cubemap could not be loaded");
+    }
+    if (Weather != nullptr)
+    {
+      Weather->SetHDRIMode(true);
     }
     return R<void>::Success();
+  };
+
+  BIND_SYNC(get_hdri_presets) << [this]() -> R<std::vector<std::string>>
+  {
+    REQUIRE_CARLA_EPISODE();
+    auto *HDRI = Episode->GetHDRIController();
+    if (HDRI == nullptr)
+    {
+      RESPOND_ERROR("this map does not support HDRI (no HDRI controller found)");
+    }
+    std::vector<std::string> Names;
+    for (const FString &Name : HDRI->GetPresetNames())
+    {
+      Names.push_back(TCHAR_TO_UTF8(*Name));
+    }
+    return Names;
   };
 
   // -- IMUI Gravity ---------------------------------------------------------

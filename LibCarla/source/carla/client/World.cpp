@@ -98,12 +98,12 @@ namespace client {
     _episode.Lock()->SetWeatherParameters(weather);
   }
 
-  rpc::HDRIParameters World::GetHDRI() const {
-    return _episode.Lock()->GetHDRIParameters();
+  void World::SetHDRIPreset(const std::string &preset) {
+    _episode.Lock()->SetHDRIPreset(preset);
   }
 
-  void World::SetHDRI(const rpc::HDRIParameters &hdri) {
-    _episode.Lock()->SetHDRIParameters(hdri);
+  std::vector<std::string> World::GetHDRIPresets() const {
+    return _episode.Lock()->GetHDRIPresets();
   }
   
   float World::GetIMUISensorGravity() const {

@@ -280,7 +280,6 @@ static auto MakeCallback(boost::python::object callback) {
 #include "SensorData.cpp"
 #include "Snapshot.cpp"
 #include "Weather.cpp"
-#include "HDRI.cpp"
 #include "World.cpp"
 #include "Commands.cpp"
 #include "TrafficManager.cpp"
@@ -305,7 +304,6 @@ BOOST_PYTHON_MODULE(libcarla) {
   export_sensor_data();
   export_snapshot();
   export_weather();
-  export_hdri();
   export_world();
   export_map();
   export_client();

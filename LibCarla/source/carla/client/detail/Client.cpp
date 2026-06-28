@@ -291,12 +291,12 @@ namespace detail {
     _pimpl->AsyncCall("set_weather_parameters", weather);
   }
 
-  rpc::HDRIParameters Client::GetHDRIParameters() {
-    return _pimpl->CallAndWait<rpc::HDRIParameters>("get_hdri_parameters");
+  void Client::SetHDRIPreset(const std::string &preset) {
+    _pimpl->CallAndWait<void>("set_hdri_preset", preset);
   }
 
-  void Client::SetHDRIParameters(const rpc::HDRIParameters &hdri) {
-    _pimpl->CallAndWait<void>("set_hdri_parameters", hdri);
+  std::vector<std::string> Client::GetHDRIPresets() {
+    return _pimpl->CallAndWait<std::vector<std::string>>("get_hdri_presets");
   }
 
   float Client::GetIMUISensorGravity() const {

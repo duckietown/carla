@@ -264,12 +264,12 @@ namespace detail {
       _client.SetWeatherParameters(weather);
     }
 
-    rpc::HDRIParameters GetHDRIParameters() {
-      return _client.GetHDRIParameters();
+    void SetHDRIPreset(const std::string &preset) {
+      _client.SetHDRIPreset(preset);
     }
 
-    void SetHDRIParameters(const rpc::HDRIParameters &hdri) {
-      _client.SetHDRIParameters(hdri);
+    std::vector<std::string> GetHDRIPresets() {
+      return _client.GetHDRIPresets();
     }
 
     float GetIMUISensorGravity() const {

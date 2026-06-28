@@ -7,4 +7,5 @@
 #     https://drive.google.com/open?id=PUT_FILE_ID_HERE
 
 1.0.0: 14TNT9bs7zRSPGNlbHDGaeBbtUziXq3TC
-Latest: 14TNT9bs7zRSPGNlbHDGaeBbtUziXq3TC
+1.1.0: 1s-XEvZGA6nUqxIH-nV7KutjPdx4KMGgP
+Latest: 1s-XEvZGA6nUqxIH-nV7KutjPdx4KMGgP

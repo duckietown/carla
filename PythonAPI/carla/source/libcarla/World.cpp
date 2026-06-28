@@ -171,6 +171,28 @@ static std::string ExportCosmosRoadMarkings(
   return self.ExportCosmosRoadMarkings(session_id, output_path);
 }
 
+static auto GetHDRIPresets(const carla::client::World &self) {
+  boost::python::list result;
+  std::vector<std::string> names;
+  {
+    carla::PythonUtil::ReleaseGIL unlock;
+    names = self.GetHDRIPresets();
+  }
+  for (const auto &name : names) {
+    result.append(name);
+  }
+  return result;
+}
+
+static void SetHDRIPreset(carla::client::World &self, boost::python::object preset) {
+  std::string name;
+  if (preset.ptr() != Py_None) {
+    name = boost::python::extract<std::string>(preset);
+  }
+  carla::PythonUtil::ReleaseGIL unlock;
+  self.SetHDRIPreset(name);
+}
+
 void export_world() {
   using namespace boost::python;
   namespace ca = carla::actors;
@@ -371,8 +393,8 @@ void export_world() {
     .def("apply_settings", &ApplySettings, (arg("settings"), arg("seconds")=0.0))
     .def("get_weather", CONST_CALL_WITHOUT_GIL(cc::World, GetWeather))
     .def("set_weather", &cc::World::SetWeather)
-    .def("get_hdri", CONST_CALL_WITHOUT_GIL(cc::World, GetHDRI))
-    .def("set_hdri", &cc::World::SetHDRI, (arg("hdri")))
+    .def("set_hdri_preset", &SetHDRIPreset, (arg("preset")))
+    .def("get_hdri_presets", &GetHDRIPresets)
     .def("get_imui_sensor_gravity", CONST_CALL_WITHOUT_GIL(cc::World, GetIMUISensorGravity))
     .def("set_imui_sensor_gravity", &cc::World::SetIMUISensorGravity, (arg("NewIMUISensorGravity")) )
     .def("get_snapshot", &cc::World::GetSnapshot)

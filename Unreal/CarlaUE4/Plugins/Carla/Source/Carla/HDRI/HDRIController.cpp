@@ -9,7 +9,7 @@
 
 #include "Engine/TextureCube.h"
 #include "Components/SceneComponent.h"
-#include "Components/LightComponentBase.h"
+// #include "Components/LightComponentBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UnrealType.h"
 
@@ -21,21 +21,43 @@ AHDRIController::AHDRIController(const FObjectInitializer& ObjectInitializer)
       this, TEXT("RootComponent"));
 }
 
-bool AHDRIController::ApplyHDRI(const FHDRIParameters& Params)
+bool AHDRIController::ApplyHDRIByName(const FString& PresetName)
 {
-  UTextureCube* CubeMap = nullptr;
-  if (!Params.Asset.IsEmpty())
+  for (const FHDRIPreset& Preset : Presets)
   {
-    CubeMap = LoadCubeMapByName(Params.Asset);
-    if (CubeMap == nullptr)
+    if (Preset.Name.Equals(PresetName, ESearchCase::IgnoreCase))
     {
-      return false;
+      const FString AssetName =
+          Preset.Cubemap != nullptr ? Preset.Cubemap->GetName() : FString();
+      return ApplyHDRI(Preset.Cubemap, Preset.Size, Preset.Intensity,
+                       Preset.ProjectionCenter, GetActorLocation(),
+                       AssetName);
     }
   }
+  UE_LOG(LogCarla, Warning,
+      TEXT("[HDRIController] HDRI preset '%s' not found in this map."),
+      *PresetName);
+  return false;
+}
 
+TArray<FString> AHDRIController::GetPresetNames() const
+{
+  TArray<FString> Names;
+  Names.Reserve(Presets.Num());
+  for (const FHDRIPreset& Preset : Presets)
+  {
+    Names.Add(Preset.Name);
+  }
+  return Names;
+}
+
+bool AHDRIController::ApplyHDRI(
+    UTextureCube* CubeMap, float Size, float Intensity,
+    FVector ProjectionCenter, FVector Location, const FString& AssetName)
+{
   if (!FindHDRIBackdrop())
   {
-    CachedBackdrop = SpawnHDRIBackdrop(Params.Location);
+    CachedBackdrop = SpawnHDRIBackdrop(Location);
     if (CachedBackdrop == nullptr)
     {
       return false;
@@ -44,19 +66,18 @@ bool AHDRIController::ApplyHDRI(const FHDRIParameters& Params)
 
   CachedBackdrop->SetActorHiddenInGame(false);
   MakeBackdropMovable();
-  CachedBackdrop->SetActorLocation(Params.Location);
+  CachedBackdrop->SetActorLocation(Location);
 
-  ApplyHDRIParameters(
-      CubeMap, Params.Size, Params.Intensity, Params.ProjectionCenter);
+  ApplyHDRIParameters(CubeMap, Size, Intensity, ProjectionCenter);
 
-  CachedBackdrop->SetActorLocation(Params.Location);
+  CachedBackdrop->SetActorLocation(Location);
 
-  if (!Params.Asset.IsEmpty())
+  if (!AssetName.IsEmpty())
   {
-    CurrentAsset = Params.Asset;
+    CurrentAsset = AssetName;
   }
 
-  SetSkyHidden(true);
+  // SetSkyHidden(true);
 
   bHDRIActive = true;
   return true;
@@ -81,91 +102,56 @@ void AHDRIController::DisableHDRI()
   }
 
   // Restore Carla's sky and its lights.
-  SetSkyHidden(false);
+  // SetSkyHidden(false);
 }
 
-AActor* AHDRIController::FindSkyActor()
-{
-  if (IsValid(CachedSkyActor))
-  {
-    return CachedSkyActor;
-  }
-
-  TArray<AActor*> Actors;
-  UGameplayStatics::GetAllActorsOfClass(
-      GetWorld(), AActor::StaticClass(), Actors);
-  for (AActor* Actor : Actors)
-  {
-    if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
-    {
-      CachedSkyActor = Actor;
-      break;
-    }
-  }
-  return CachedSkyActor;
-}
-
-void AHDRIController::SetSkyHidden(bool bHidden)
-{
-  AActor* SkyActor = FindSkyActor();
-  if (SkyActor == nullptr)
-  {
-    UE_LOG(LogCarla, Warning,
-        TEXT("[HDRIController] BP_Sky_C not found; cannot toggle Carla sky."));
-    return;
-  }
-
-  SkyActor->SetActorHiddenInGame(bHidden);
-
-  TArray<AActor*> SkyActors;
-  SkyActors.Add(SkyActor);
-  SkyActor->GetAttachedActors(SkyActors, /*bResetArray=*/false);
-
-  for (AActor* Actor : SkyActors)
-  {
-    TArray<ULightComponentBase*> Lights;
-    Actor->GetComponents<ULightComponentBase>(Lights);
-    for (ULightComponentBase* Light : Lights)
-    {
-      Light->SetVisibility(!bHidden, true);
-    }
-  }
-}
-
-FHDRIParameters AHDRIController::GetHDRIParameters() const
-{
-  FHDRIParameters Params;
-  Params.bEnabled = bHDRIActive;
-  Params.Asset = CurrentAsset;
-  if (CachedBackdrop != nullptr)
-  {
-    Params.Size = GetSize();
-    Params.Intensity = GetIntensity();
-    Params.ProjectionCenter = GetProjectionCenter();
-    Params.Location = CachedBackdrop->GetActorLocation();
-  }
-  return Params;
-}
-
-UTextureCube* AHDRIController::LoadCubeMapByName(const FString& Name) const
-{
-  static const TCHAR* BaseDir = TEXT("/Game/Carla/Static/HDRi/");
-
-  FString ObjectPath = Name;
-  if (!Name.StartsWith(TEXT("/")))
-  {
-    ObjectPath = FString::Printf(TEXT("%s%s.%s"), BaseDir, *Name, *Name);
-  }
-
-  UTextureCube* CubeMap = LoadObject<UTextureCube>(nullptr, *ObjectPath);
-  if (CubeMap == nullptr)
-  {
-    UE_LOG(LogCarla, Error,
-        TEXT("[HDRIController] Could not load cubemap '%s' (resolved '%s')"),
-        *Name, *ObjectPath);
-  }
-  return CubeMap;
-}
+// AActor* AHDRIController::FindSkyActor()
+// {
+//   if (IsValid(CachedSkyActor))
+//   {
+//     return CachedSkyActor;
+//   }
+//
+//   TArray<AActor*> Actors;
+//   UGameplayStatics::GetAllActorsOfClass(
+//       GetWorld(), AActor::StaticClass(), Actors);
+//   for (AActor* Actor : Actors)
+//   {
+//     if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
+//     {
+//       CachedSkyActor = Actor;
+//       break;
+//     }
+//   }
+//   return CachedSkyActor;
+// }
+//
+// void AHDRIController::SetSkyHidden(bool bHidden)
+// {
+//   AActor* SkyActor = FindSkyActor();
+//   if (SkyActor == nullptr)
+//   {
+//     UE_LOG(LogCarla, Warning,
+//         TEXT("[HDRIController] BP_Sky_C not found; cannot toggle Carla sky."));
+//     return;
+//   }
+//
+//   SkyActor->SetActorHiddenInGame(bHidden);
+//
+//   TArray<AActor*> SkyActors;
+//   SkyActors.Add(SkyActor);
+//   SkyActor->GetAttachedActors(SkyActors, /*bResetArray=*/false);
+//
+//   for (AActor* Actor : SkyActors)
+//   {
+//     TArray<ULightComponentBase*> Lights;
+//     Actor->GetComponents<ULightComponentBase>(Lights);
+//     for (ULightComponentBase* Light : Lights)
+//     {
+//       Light->SetVisibility(!bHidden, true);
+//     }
+//   }
+// }
 
 void AHDRIController::ApplyHDRIParameters(
     UTextureCube* CubeMap,
@@ -193,43 +179,6 @@ void AHDRIController::ApplyHDRIParameters(
   }
 
   CachedBackdrop->RerunConstructionScripts();
-}
-
-float AHDRIController::GetSize() const
-{
-  float Value = 0.0f;
-  GetFloatProperty(TEXT("Size"), Value);
-  return Value;
-}
-
-float AHDRIController::GetIntensity() const
-{
-  float Value = 0.0f;
-  GetFloatProperty(TEXT("Intensity"), Value);
-  return Value;
-}
-
-FVector AHDRIController::GetProjectionCenter() const
-{
-  FVector Value = FVector::ZeroVector;
-  GetVectorProperty(TEXT("ProjectionCenter"), Value);
-  return Value;
-}
-
-UTextureCube* AHDRIController::GetCubeMap() const
-{
-  if (CachedBackdrop == nullptr)
-  {
-    return nullptr;
-  }
-
-  if (FObjectProperty* ObjProp = CastField<FObjectProperty>(
-          CachedBackdrop->GetClass()->FindPropertyByName(TEXT("Cubemap"))))
-  {
-    return Cast<UTextureCube>(ObjProp->GetObjectPropertyValue(
-        ObjProp->ContainerPtrToValuePtr<void>(CachedBackdrop)));
-  }
-  return nullptr;
 }
 
 bool AHDRIController::FindHDRIBackdrop()
@@ -289,23 +238,6 @@ bool AHDRIController::SetFloatProperty(const FName& PropertyName, float Value)
   return false;
 }
 
-bool AHDRIController::GetFloatProperty(
-    const FName& PropertyName, float& OutValue) const
-{
-  if (CachedBackdrop == nullptr)
-  {
-    return false;
-  }
-  if (FFloatProperty* FloatProp = CastField<FFloatProperty>(
-          CachedBackdrop->GetClass()->FindPropertyByName(PropertyName)))
-  {
-    OutValue = FloatProp->GetPropertyValue(
-        FloatProp->ContainerPtrToValuePtr<void>(CachedBackdrop));
-    return true;
-  }
-  return false;
-}
-
 bool AHDRIController::SetVectorProperty(
     const FName& PropertyName, const FVector& Value)
 {
@@ -315,25 +247,6 @@ bool AHDRIController::SetVectorProperty(
     if (StructProp->Struct == TBaseStructure<FVector>::Get())
     {
       *StructProp->ContainerPtrToValuePtr<FVector>(CachedBackdrop) = Value;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool AHDRIController::GetVectorProperty(
-    const FName& PropertyName, FVector& OutValue) const
-{
-  if (CachedBackdrop == nullptr)
-  {
-    return false;
-  }
-  if (FStructProperty* StructProp = CastField<FStructProperty>(
-          CachedBackdrop->GetClass()->FindPropertyByName(PropertyName)))
-  {
-    if (StructProp->Struct == TBaseStructure<FVector>::Get())
-    {
-      OutValue = *StructProp->ContainerPtrToValuePtr<FVector>(CachedBackdrop);
       return true;
     }
   }

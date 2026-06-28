@@ -7,11 +7,31 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "Carla/HDRI/HDRIParameters.h"
 
 #include "HDRIController.generated.h"
 
 class UTextureCube;
+
+USTRUCT(BlueprintType)
+struct FHDRIPreset
+{
+  GENERATED_BODY()
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
+  FString Name;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
+  UTextureCube* Cubemap = nullptr;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI", meta = (ClampMin = "0.0"))
+  float Intensity = 100.0f;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI", meta = (ClampMin = "0.0"))
+  float Size = 200.0f;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
+  FVector ProjectionCenter = FVector(0.0f, 0.0f, 1000.0f);
+};
 
 UCLASS()
 class CARLA_API AHDRIController : public AActor
@@ -22,13 +42,13 @@ public:
 
   AHDRIController(const FObjectInitializer& ObjectInitializer);
 
-  bool ApplyHDRI(const FHDRIParameters& Params);
+  bool ApplyHDRIByName(const FString& PresetName);
+
+  TArray<FString> GetPresetNames() const;
 
   void DisableHDRI();
 
   bool IsHDRIActive() const { return bHDRIActive; }
-
-  FHDRIParameters GetHDRIParameters() const;
 
   UFUNCTION(BlueprintCallable, Category = "HDRI")
   void ApplyHDRIParameters(
@@ -37,46 +57,39 @@ public:
       float Intensity,
       FVector ProjectionCenter);
 
-  UFUNCTION(BlueprintCallable, Category = "HDRI")
-  float GetSize() const;
-
-  UFUNCTION(BlueprintCallable, Category = "HDRI")
-  float GetIntensity() const;
-
-  UFUNCTION(BlueprintCallable, Category = "HDRI")
-  FVector GetProjectionCenter() const;
-
-  UFUNCTION(BlueprintCallable, Category = "HDRI")
-  UTextureCube* GetCubeMap() const;
-
 private:
 
   bool FindHDRIBackdrop();
 
   AActor* SpawnHDRIBackdrop(const FVector& Location);
 
-  AActor* FindSkyActor();
+  /// Core apply path: place/show the backdrop, set its look and hide Carla's
+  /// sky. Called by ApplyHDRIByName.
+  bool ApplyHDRI(UTextureCube* CubeMap, float Size, float Intensity,
+                 FVector ProjectionCenter, FVector Location,
+                 const FString& AssetName);
 
-  void SetSkyHidden(bool bHidden);
+  // AActor* FindSkyActor();
+
+  // void SetSkyHidden(bool bHidden);
 
   void MakeBackdropMovable();
 
-  UTextureCube* LoadCubeMapByName(const FString& Name) const;
-
   bool SetFloatProperty(const FName& PropertyName, float Value);
-  bool GetFloatProperty(const FName& PropertyName, float& OutValue) const;
   bool SetVectorProperty(const FName& PropertyName, const FVector& Value);
-  bool GetVectorProperty(const FName& PropertyName, FVector& OutValue) const;
 
   UPROPERTY()
   AActor* CachedBackdrop = nullptr;
 
-  UPROPERTY()
-  AActor* CachedSkyActor = nullptr;
+  // UPROPERTY()
+  // AActor* CachedSkyActor = nullptr;
 
   UPROPERTY()
   bool bHDRIActive = false;
 
   UPROPERTY()
   FString CurrentAsset;
+
+  UPROPERTY(EditAnywhere, Category = "HDRI")
+  TArray<FHDRIPreset> Presets;
 };
