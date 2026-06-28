@@ -125,31 +125,7 @@ void AWeather::SetHDRIMode(bool bEnable)
     bHDRIModeActive = bEnable;
 
     SetActorHiddenInGame(bEnable);
-    if (AActor* SkyActor = FindSkyActor())
-    {
-        SkyActor->SetActorHiddenInGame(bEnable);
-    }
 
     UE_LOG(LogCarla, Log, TEXT("[Weather] HDRI mode %s"),
-        bEnable ? TEXT("enabled (sky hidden)") : TEXT("disabled (sky restored)"));
-}
-
-AActor* AWeather::FindSkyActor()
-{
-    if (CachedSkyActor != nullptr)
-    {
-        return CachedSkyActor;
-    }
-
-    TArray<AActor*> Actors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
-    for (AActor* Actor : Actors)
-    {
-        if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
-        {
-            CachedSkyActor = Actor;
-            break;
-        }
-    }
-    return CachedSkyActor;
+        bEnable ? TEXT("enabled") : TEXT("disabled"));
 }

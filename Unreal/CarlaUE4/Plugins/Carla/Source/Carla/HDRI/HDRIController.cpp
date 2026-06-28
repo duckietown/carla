@@ -8,8 +8,9 @@
 #include "Carla/HDRI/HDRIController.h"
 
 #include "Engine/TextureCube.h"
+#include "Engine/SkyLight.h"
 #include "Components/SceneComponent.h"
-// #include "Components/LightComponentBase.h"
+#include "Components/SkyLightComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UnrealType.h"
 
@@ -21,40 +22,27 @@ AHDRIController::AHDRIController(const FObjectInitializer& ObjectInitializer)
       this, TEXT("RootComponent"));
 }
 
-bool AHDRIController::ApplyHDRIByName(const FString& PresetName)
+bool AHDRIController::ApplyHDRI(const FString& PresetName)
 {
-  for (const FHDRIPreset& Preset : Presets)
+  const FHDRIPreset* Preset = nullptr;
+  for (const FHDRIPreset& Candidate : Presets)
   {
-    if (Preset.Name.Equals(PresetName, ESearchCase::IgnoreCase))
+    if (Candidate.Name.Equals(PresetName, ESearchCase::IgnoreCase))
     {
-      const FString AssetName =
-          Preset.Cubemap != nullptr ? Preset.Cubemap->GetName() : FString();
-      return ApplyHDRI(Preset.Cubemap, Preset.Size, Preset.Intensity,
-                       Preset.ProjectionCenter, GetActorLocation(),
-                       AssetName);
+      Preset = &Candidate;
+      break;
     }
   }
-  UE_LOG(LogCarla, Warning,
-      TEXT("[HDRIController] HDRI preset '%s' not found in this map."),
-      *PresetName);
-  return false;
-}
 
-TArray<FString> AHDRIController::GetPresetNames() const
-{
-  TArray<FString> Names;
-  Names.Reserve(Presets.Num());
-  for (const FHDRIPreset& Preset : Presets)
+  if (Preset == nullptr)
   {
-    Names.Add(Preset.Name);
+    UE_LOG(LogCarla, Warning,
+        TEXT("[HDRIController] HDRI preset '%s' not found in this map."),
+        *PresetName);
+    return false;
   }
-  return Names;
-}
 
-bool AHDRIController::ApplyHDRI(
-    UTextureCube* CubeMap, float Size, float Intensity,
-    FVector ProjectionCenter, FVector Location, const FString& AssetName)
-{
+  const FVector Location = GetActorLocation();
   if (!FindHDRIBackdrop())
   {
     CachedBackdrop = SpawnHDRIBackdrop(Location);
@@ -68,19 +56,26 @@ bool AHDRIController::ApplyHDRI(
   MakeBackdropMovable();
   CachedBackdrop->SetActorLocation(Location);
 
-  ApplyHDRIParameters(CubeMap, Size, Intensity, ProjectionCenter);
+  ApplyHDRIParameters(Preset->Cubemap, Preset->Size, Preset->Intensity,
+                      Preset->ProjectionCenter);
 
   CachedBackdrop->SetActorLocation(Location);
 
-  if (!AssetName.IsEmpty())
-  {
-    CurrentAsset = AssetName;
-  }
-
-  // SetSkyHidden(true);
+  ScheduleSkyLightRecapture(Preset->Cubemap);
 
   bHDRIActive = true;
   return true;
+}
+
+TArray<FString> AHDRIController::GetPresetNames() const
+{
+  TArray<FString> Names;
+  Names.Reserve(Presets.Num());
+  for (const FHDRIPreset& Preset : Presets)
+  {
+    Names.Add(Preset.Name);
+  }
+  return Names;
 }
 
 void AHDRIController::MakeBackdropMovable()
@@ -101,57 +96,49 @@ void AHDRIController::DisableHDRI()
     CachedBackdrop->SetActorHiddenInGame(true);
   }
 
-  // Restore Carla's sky and its lights.
-  // SetSkyHidden(false);
+  ScheduleSkyLightRecapture(nullptr);
 }
 
-// AActor* AHDRIController::FindSkyActor()
-// {
-//   if (IsValid(CachedSkyActor))
-//   {
-//     return CachedSkyActor;
-//   }
-//
-//   TArray<AActor*> Actors;
-//   UGameplayStatics::GetAllActorsOfClass(
-//       GetWorld(), AActor::StaticClass(), Actors);
-//   for (AActor* Actor : Actors)
-//   {
-//     if (Actor != nullptr && Actor->GetClass()->GetName().Equals(TEXT("BP_Sky_C")))
-//     {
-//       CachedSkyActor = Actor;
-//       break;
-//     }
-//   }
-//   return CachedSkyActor;
-// }
-//
-// void AHDRIController::SetSkyHidden(bool bHidden)
-// {
-//   AActor* SkyActor = FindSkyActor();
-//   if (SkyActor == nullptr)
-//   {
-//     UE_LOG(LogCarla, Warning,
-//         TEXT("[HDRIController] BP_Sky_C not found; cannot toggle Carla sky."));
-//     return;
-//   }
-//
-//   SkyActor->SetActorHiddenInGame(bHidden);
-//
-//   TArray<AActor*> SkyActors;
-//   SkyActors.Add(SkyActor);
-//   SkyActor->GetAttachedActors(SkyActors, /*bResetArray=*/false);
-//
-//   for (AActor* Actor : SkyActors)
-//   {
-//     TArray<ULightComponentBase*> Lights;
-//     Actor->GetComponents<ULightComponentBase>(Lights);
-//     for (ULightComponentBase* Light : Lights)
-//     {
-//       Light->SetVisibility(!bHidden, true);
-//     }
-//   }
-// }
+void AHDRIController::ScheduleSkyLightRecapture(UTextureCube* WaitForCubemap)
+{
+  PendingRecaptureCubemap = WaitForCubemap;
+  RecaptureFence.BeginFence();
+
+  GetWorldTimerManager().SetTimer(
+      RecaptureTimerHandle, this, &AHDRIController::TryRecaptureWhenReady,
+      0.05f, true);
+}
+
+void AHDRIController::TryRecaptureWhenReady()
+{
+  if (PendingRecaptureCubemap != nullptr &&
+      !PendingRecaptureCubemap->IsFullyStreamedIn())
+  {
+    return;
+  }
+
+  if (!RecaptureFence.IsFenceComplete())
+  {
+    return;
+  }
+
+  RecaptureSkyLight();
+
+  GetWorldTimerManager().ClearTimer(RecaptureTimerHandle);
+}
+
+void AHDRIController::RecaptureSkyLight()
+{
+  TArray<AActor*> SkyLights;
+  UGameplayStatics::GetAllActorsOfClass(
+      GetWorld(), ASkyLight::StaticClass(), SkyLights);
+  for (AActor* Actor : SkyLights)
+  {
+    CastChecked<ASkyLight>(Actor)->GetLightComponent()->SetCaptureIsDirty();
+  }
+
+  USkyLightComponent::UpdateSkyCaptureContents(GetWorld());
+}
 
 void AHDRIController::ApplyHDRIParameters(
     UTextureCube* CubeMap,

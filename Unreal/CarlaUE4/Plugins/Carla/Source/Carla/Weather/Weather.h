@@ -64,12 +64,7 @@ private:
 
   void CheckWeatherPostProcessEffects();
 
-  AActor* FindSkyActor();
-
   bool bHDRIModeActive = false;
-
-  UPROPERTY()
-  AActor* CachedSkyActor = nullptr;
 
   UPROPERTY(VisibleAnywhere)
   FWeatherParameters Weather;

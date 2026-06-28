@@ -924,7 +924,7 @@ void FCarlaServer::FPimpl::BindActions()
       return R<void>::Success();
     }
 
-    if (!HDRI->ApplyHDRIByName(FString(preset.c_str())))
+    if (!HDRI->ApplyHDRI(FString(preset.c_str())))
     {
       RESPOND_ERROR("unable to apply HDRI preset: no preset with that name in "
           "this map, or its cubemap could not be loaded");

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "RenderCommandFence.h"
 
 #include "HDRIController.generated.h"
 
@@ -42,7 +43,7 @@ public:
 
   AHDRIController(const FObjectInitializer& ObjectInitializer);
 
-  bool ApplyHDRIByName(const FString& PresetName);
+  bool ApplyHDRI(const FString& PresetName);
 
   TArray<FString> GetPresetNames() const;
 
@@ -63,17 +64,13 @@ private:
 
   AActor* SpawnHDRIBackdrop(const FVector& Location);
 
-  /// Core apply path: place/show the backdrop, set its look and hide Carla's
-  /// sky. Called by ApplyHDRIByName.
-  bool ApplyHDRI(UTextureCube* CubeMap, float Size, float Intensity,
-                 FVector ProjectionCenter, FVector Location,
-                 const FString& AssetName);
-
-  // AActor* FindSkyActor();
-
-  // void SetSkyHidden(bool bHidden);
-
   void MakeBackdropMovable();
+
+  void RecaptureSkyLight();
+
+  void ScheduleSkyLightRecapture(UTextureCube* WaitForCubemap);
+
+  void TryRecaptureWhenReady();
 
   bool SetFloatProperty(const FName& PropertyName, float Value);
   bool SetVectorProperty(const FName& PropertyName, const FVector& Value);
@@ -81,14 +78,16 @@ private:
   UPROPERTY()
   AActor* CachedBackdrop = nullptr;
 
-  // UPROPERTY()
-  // AActor* CachedSkyActor = nullptr;
+  FTimerHandle RecaptureTimerHandle;
+
+  UPROPERTY()
+  UTextureCube* PendingRecaptureCubemap = nullptr;
+
+  FRenderCommandFence RecaptureFence;
 
   UPROPERTY()
   bool bHDRIActive = false;
 
-  UPROPERTY()
-  FString CurrentAsset;
 
   UPROPERTY(EditAnywhere, Category = "HDRI")
   TArray<FHDRIPreset> Presets;
