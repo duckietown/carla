@@ -45,6 +45,14 @@ namespace rpc {
     Bridge       =   26u,
     RailTrack    =   27u,
     GuardRail    =   28u,
+    // duckietown
+    DuckietownCenterLane = 29u,
+    DuckietownSideLane   = 30u,
+    DuckietownAsphalt      = 31u,
+    DuckietownStopLane   = 32u,
+    DuckietownSign       = 33u,
+    DuckietownBot        = 34u,
+    DuckietownDuck       = 35u,
 
     Any          =  0xFF
   };

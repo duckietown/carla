@@ -48,7 +48,15 @@ namespace detail {
         { 81u,   0u,  81u},   // ground        =  25u
         {150u, 100u, 100u},   // bridge        =  26u
         {230u, 150u, 140u},   // rail track    =  27u
-        {180u, 165u, 180u}    // guard rail    =  28u
+        {180u, 165u, 180u},   // guard rail    =  28u
+        // duckietown
+        {255u, 255u,   0u},   // duckietown center lane =  29u
+        {255u, 255u, 255u},   // duckietown side lane   =  30u
+        { 90u,  90u,  90u},   // duckietown asphalt     =  31u
+        {200u,  20u,  20u},   // duckietown stop lane   =  32u
+        {255u, 140u,   0u},   // duckietown sign        =  33u
+        { 30u,  60u, 220u},   // duckietown bot         =  34u
+        {240u, 180u,   0u}    // duckietown duck        =  35u
       };
 
 } // namespace detail

@@ -307,6 +307,13 @@ void export_world() {
     .value("Bus", cr::CityObjectLabel::Bus)
     .value("Rider", cr::CityObjectLabel::Rider)
     .value("Train", cr::CityObjectLabel::Train)
+    .value("DuckietownCenterLane", cr::CityObjectLabel::DuckietownCenterLane)
+    .value("DuckietownSideLane", cr::CityObjectLabel::DuckietownSideLane)
+    .value("DuckietownAsphalt", cr::CityObjectLabel::DuckietownAsphalt)
+    .value("DuckietownStopLane", cr::CityObjectLabel::DuckietownStopLane)
+    .value("DuckietownSign", cr::CityObjectLabel::DuckietownSign)
+    .value("DuckietownBot", cr::CityObjectLabel::DuckietownBot)
+    .value("DuckietownDuck", cr::CityObjectLabel::DuckietownDuck)
     .value("Any", cr::CityObjectLabel::Any)
   ;
 

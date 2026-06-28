@@ -36,6 +36,9 @@ Use ARROWS or WASD keys for control.
     C            : change weather (Shift+C reverse)
     Backspace    : change vehicle
 
+    U            : next Duckietown map (Shift+U reverse)
+    J            : cycle HDRI scene preset (Shift+J reverse)
+
     O            : open/close all doors of vehicle
     T            : toggle vehicle's telemetry
 
@@ -103,6 +106,7 @@ try:
     from pygame.locals import K_g
     from pygame.locals import K_h
     from pygame.locals import K_i
+    from pygame.locals import K_j
     from pygame.locals import K_l
     from pygame.locals import K_m
     from pygame.locals import K_n
@@ -112,6 +116,7 @@ try:
     from pygame.locals import K_r
     from pygame.locals import K_s
     from pygame.locals import K_t
+    from pygame.locals import K_u
     from pygame.locals import K_v
     from pygame.locals import K_w
     from pygame.locals import K_x
@@ -125,6 +130,27 @@ try:
     import numpy as np
 except ImportError:
     raise RuntimeError('cannot import numpy, make sure numpy package is installed')
+
+
+# ==============================================================================
+# -- Duckietown maps -----------------------------------------------------------
+# ==============================================================================
+
+DUCKIETOWN_MAPS = ['duckietown_%02d' % i for i in range(1, 7)]
+
+
+# ==============================================================================
+# -- Duckietown segmentation palette -------------------------------------------
+# ==============================================================================
+
+DUCKIETOWN_PALETTE = np.zeros((256, 3), dtype=np.uint8)
+DUCKIETOWN_PALETTE[29] = (255, 255, 255)  # DuckietownCenterLane (white)
+DUCKIETOWN_PALETTE[30] = (  0,   0, 255)  # DuckietownSideLane   (blue)
+DUCKIETOWN_PALETTE[31] = (  0, 255,   0)  # DuckietownAsphalt    (green)
+DUCKIETOWN_PALETTE[32] = (255,   0,   0)  # DuckietownStopLane   (red)
+DUCKIETOWN_PALETTE[33] = (255, 140,   0)  # DuckietownSign
+DUCKIETOWN_PALETTE[34] = ( 30,  60, 220)  # DuckietownBot
+DUCKIETOWN_PALETTE[35] = (240, 180,   0)  # DuckietownDuck
 
 
 # ==============================================================================
@@ -174,10 +200,13 @@ def get_actor_blueprints(world, filter, generation):
 
 
 class World(object):
-    def __init__(self, carla_world, hud, args):
+    def __init__(self, carla_world, hud, args, actor_id=None):
         self.world = carla_world
         self.sync = args.sync
         self.actor_role_name = args.rolename
+        # Optional blueprint id to spawn instead of a random one (used to keep
+        # the same car across map switches).
+        self._preferred_actor_id = actor_id
         try:
             self.map = self.world.get_map()
         except RuntimeError as error:
@@ -199,7 +228,7 @@ class World(object):
         self._actor_generation = args.generation
         self._gamma = args.gamma
         self.restart()
-        self.world.on_tick(hud.on_world_tick)
+        self._on_tick_id = self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
         self.recording_start = 0
         self.constant_velocity_enabled = False
@@ -220,6 +249,18 @@ class World(object):
             carla.MapLayer.All
         ]
 
+        self.pending_map = None
+        try:
+            current_map = self.map.name.split('/')[-1]
+            self.current_map_index = DUCKIETOWN_MAPS.index(current_map)
+        except ValueError:
+            self.current_map_index = 0
+        try:
+            self._hdri_presets = list(self.world.get_hdri_presets())
+        except RuntimeError:
+            self._hdri_presets = []
+        self._hdri_index = len(self._hdri_presets)
+
     def restart(self):
         self.player_max_speed = 1.589
         self.player_max_speed_fast = 3.713
@@ -230,7 +271,13 @@ class World(object):
         blueprint_list = get_actor_blueprints(self.world, self._actor_filter, self._actor_generation)
         if not blueprint_list:
             raise ValueError("Couldn't find any blueprints with the specified filters")
-        blueprint = random.choice(blueprint_list)
+        # Reuse the remembered car if available, otherwise pick a random one.
+        blueprint = next((bp for bp in blueprint_list if bp.id == self._preferred_actor_id), None)
+        if blueprint is None:
+            blueprint = random.choice(blueprint_list)
+        # Only honor the preference for the first spawn; a manual restart
+        # (Backspace) should pick a new random vehicle again.
+        self._preferred_actor_id = None
         blueprint.set_attribute('role_name', self.actor_role_name)
         if blueprint.has_attribute('terramechanics'):
             blueprint.set_attribute('terramechanics', 'true')
@@ -305,6 +352,29 @@ class World(object):
             self.hud.notification('Loading map layer: %s' % selected)
             self.world.load_map_layer(selected)
 
+    def next_map(self, reverse=False):
+        self.current_map_index += -1 if reverse else 1
+        self.current_map_index %= len(DUCKIETOWN_MAPS)
+        self.pending_map = DUCKIETOWN_MAPS[self.current_map_index]
+        self.hud.notification('Loading map: %s' % self.pending_map)
+
+    def next_hdri(self, reverse=False):
+        if not self._hdri_presets:
+            self.hud.notification('No HDRI presets available on this map')
+            return
+        self._hdri_index += -1 if reverse else 1
+        self._hdri_index %= (len(self._hdri_presets) + 1)
+        try:
+            if self._hdri_index == len(self._hdri_presets):
+                self.world.set_hdri_preset(None)
+                self.hud.notification('HDRI scene: disabled')
+            else:
+                preset = self._hdri_presets[self._hdri_index]
+                self.world.set_hdri_preset(preset)
+                self.hud.notification('HDRI scene: %s' % preset)
+        except RuntimeError as error:
+            self.hud.notification('HDRI error: %s' % error)
+
     def toggle_radar(self):
         if self.radar_sensor is None:
             self.radar_sensor = RadarSensor(self.player)
@@ -327,6 +397,14 @@ class World(object):
     def render(self, display):
         self.camera_manager.render(display)
         self.hud.render(display)
+
+    def detach(self):
+        if getattr(self, '_on_tick_id', None) is not None:
+            try:
+                self.world.remove_on_tick(self._on_tick_id)
+            except RuntimeError:
+                pass
+            self._on_tick_id = None
 
     def destroy_sensors(self):
         self.camera_manager.sensor.destroy()
@@ -412,6 +490,14 @@ class KeyboardControl(object):
                     world.next_weather()
                 elif event.key == K_g:
                     world.toggle_radar()
+                elif event.key == K_u and pygame.key.get_mods() & KMOD_SHIFT:
+                    world.next_map(reverse=True)
+                elif event.key == K_u:
+                    world.next_map()
+                elif event.key == K_j and pygame.key.get_mods() & KMOD_SHIFT:
+                    world.next_hdri(reverse=True)
+                elif event.key == K_j:
+                    world.next_hdri()
                 elif event.key == K_BACKQUOTE:
                     world.camera_manager.next_sensor()
                 elif event.key == K_n:
@@ -1099,8 +1185,7 @@ class CameraManager(object):
             ['sensor.camera.depth', cc.Depth, 'Camera Depth (Gray Scale)', {}],
             ['sensor.camera.depth', cc.LogarithmicDepth, 'Camera Depth (Logarithmic Gray Scale)', {}],
             ['sensor.camera.semantic_segmentation', cc.Raw, 'Camera Semantic Segmentation (Raw)', {}],
-            ['sensor.camera.semantic_segmentation', cc.CityScapesPalette, 'Camera Semantic Segmentation (CityScapes Palette)', {}],
-            ['sensor.camera.instance_segmentation', cc.CityScapesPalette, 'Camera Instance Segmentation (CityScapes Palette)', {}],
+            ['sensor.camera.semantic_segmentation', cc.Raw, 'Camera Duckietown Segmentation', {}],
             ['sensor.camera.instance_segmentation', cc.Raw, 'Camera Instance Segmentation (Raw)', {}],
             ['sensor.camera.cosmos_visualization', cc.Raw, 'Cosmos Control Visualization', {}],
             ['sensor.lidar.ray_cast', None, 'Lidar (Ray-Cast)', {'range': '50'}],
@@ -1205,6 +1290,12 @@ class CameraManager(object):
             array = array[:, :, :3]
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+        elif self.sensors[self.index][2] == 'Camera Duckietown Segmentation':
+            array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+            array = np.reshape(array, (image.height, image.width, 4))
+            labels = array[:, :, 2]
+            rgb = DUCKIETOWN_PALETTE[labels]
+            self.surface = pygame.surfarray.make_surface(rgb.swapaxes(0, 1))
         else:
             image.convert(self.sensors[self.index][1])
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
@@ -1221,6 +1312,41 @@ class CameraManager(object):
 # ==============================================================================
 
 
+def apply_sync_settings(client, sim_world, args):
+    if args.sync:
+        settings = sim_world.get_settings()
+        if not settings.synchronous_mode:
+            settings.synchronous_mode = True
+            settings.fixed_delta_seconds = 0.05
+        sim_world.apply_settings(settings)
+        client.get_trafficmanager().set_synchronous_mode(True)
+
+
+def reload_world(client, world, hud, args):
+    """Load world.pending_map and rebuild the World/controller around it."""
+    map_name = world.pending_map
+    cam_index = world.camera_manager.index if world.camera_manager is not None else 0
+    cam_pos_index = world.camera_manager.transform_index if world.camera_manager is not None else 0
+    actor_id = world.player.type_id if world.player is not None else None
+    world.detach()
+    world.destroy()
+    try:
+        client.get_trafficmanager().shut_down()
+    except (RuntimeError, AttributeError):
+        pass
+    sim_world = client.load_world(map_name)
+    apply_sync_settings(client, sim_world, args)
+    if args.sync:
+        sim_world.tick()
+    else:
+        sim_world.wait_for_tick()
+    new_world = World(sim_world, hud, args, actor_id=actor_id)
+    new_world.camera_manager.transform_index = cam_pos_index
+    new_world.camera_manager.set_sensor(cam_index, notify=False)
+    controller = KeyboardControl(new_world, args.autopilot)
+    return sim_world, new_world, controller
+
+
 def game_loop(args):
     pygame.init()
     pygame.font.init()
@@ -1231,17 +1357,13 @@ def game_loop(args):
         client = carla.Client(args.host, args.port)
         client.set_timeout(2000.0)
 
-        sim_world = client.get_world()
+        if args.map:
+            sim_world = client.load_world(args.map)
+        else:
+            sim_world = client.get_world()
         if args.sync:
             original_settings = sim_world.get_settings()
-            settings = sim_world.get_settings()
-            if not settings.synchronous_mode:
-                settings.synchronous_mode = True
-                settings.fixed_delta_seconds = 0.05
-            sim_world.apply_settings(settings)
-
-            traffic_manager = client.get_trafficmanager()
-            traffic_manager.set_synchronous_mode(True)
+            apply_sync_settings(client, sim_world, args)
 
         if args.autopilot and not sim_world.get_settings().synchronous_mode:
             print("WARNING: You are currently in asynchronous mode and could "
@@ -1269,6 +1391,9 @@ def game_loop(args):
             clock.tick_busy_loop(60)
             if controller.parse_events(client, world, clock, args.sync):
                 return
+            if world.pending_map is not None:
+                sim_world, world, controller = reload_world(client, world, hud, args)
+                continue
             world.tick(clock)
             world.render(display)
             pygame.display.flip()
@@ -1282,6 +1407,7 @@ def game_loop(args):
             client.stop_recorder()
 
         if world is not None:
+            world.detach()
             world.destroy()
 
         pygame.quit()
@@ -1344,6 +1470,12 @@ def main():
         '--sync',
         action='store_true',
         help='Activate synchronous mode execution')
+    argparser.add_argument(
+        '--map',
+        metavar='NAME',
+        default=None,
+        help='load a specific map at start (e.g. duckietown_01). '
+             'Cycle in-game with U / Shift+U')
     args = argparser.parse_args()
 
     args.width, args.height = [int(x) for x in args.res.split('x')]

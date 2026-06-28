@@ -55,6 +55,13 @@ crp::CityObjectLabel ATagger::GetLabelByFolderName(const FString &String) {
   else if (String == "Bus")          return crp::CityObjectLabel::Bus;
   else if (String == "Rider")        return crp::CityObjectLabel::Rider;
   else if (String == "Train")        return crp::CityObjectLabel::Train;
+  else if (String == "DuckietownCenterLane") return crp::CityObjectLabel::DuckietownCenterLane;
+  else if (String == "DuckietownSideLane")   return crp::CityObjectLabel::DuckietownSideLane;
+  else if (String == "DuckietownAsphalt")       return crp::CityObjectLabel::DuckietownAsphalt;
+  else if (String == "DuckietownStopLane")   return crp::CityObjectLabel::DuckietownStopLane;
+  else if (String == "DuckietownSign")       return crp::CityObjectLabel::DuckietownSign;
+  else if (String == "DuckietownBot")        return crp::CityObjectLabel::DuckietownBot;
+  else if (String == "DuckietownDuck")       return crp::CityObjectLabel::DuckietownDuck;
   else                               return crp::CityObjectLabel::None;
 }
 
@@ -324,6 +331,13 @@ FString ATagger::GetTagAsString(const crp::CityObjectLabel Label)
     CARLA_GET_LABEL_STR(Bus)
     CARLA_GET_LABEL_STR(Train)
     CARLA_GET_LABEL_STR(Rider)
+    CARLA_GET_LABEL_STR(DuckietownCenterLane)
+    CARLA_GET_LABEL_STR(DuckietownSideLane)
+    CARLA_GET_LABEL_STR(DuckietownAsphalt)
+    CARLA_GET_LABEL_STR(DuckietownStopLane)
+    CARLA_GET_LABEL_STR(DuckietownSign)
+    CARLA_GET_LABEL_STR(DuckietownBot)
+    CARLA_GET_LABEL_STR(DuckietownDuck)
 
 #undef CARLA_GET_LABEL_STR
   }
