@@ -8,15 +8,16 @@ set -e
 
 DOC_STRING="Update CARLA content to the latest version, to be run after 'git pull'."
 
-USAGE_STRING="Usage: $0 [-h|--help] [-s|--skip-download]"
+USAGE_STRING="Usage: $0 [-h|--help] [-s|--skip-download] [-d|--skip-duckietown]"
 
 # ==============================================================================
 # -- Parse arguments -----------------------------------------------------------
 # ==============================================================================
 
 SKIP_DOWNLOAD=false
+SKIP_DUCKIETOWN=false
 
-OPTS=`getopt -o hs --long help,skip-download -n 'parse-options' -- "$@"`
+OPTS=`getopt -o hsd --long help,skip-download,skip-duckietown -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then echo "$USAGE_STRING" ; exit 2 ; fi
 
@@ -26,6 +27,9 @@ while true; do
   case "$1" in
     -s | --skip-download )
       SKIP_DOWNLOAD=true;
+      shift ;;
+    -d | --skip-duckietown )
+      SKIP_DUCKIETOWN=true;
       shift ;;
     -h | --help )
       echo "$DOC_STRING"
@@ -90,10 +94,7 @@ if $SKIP_DOWNLOAD ; then
   echo "  ${CONTENT_LINK}"
   echo
   echo "and extract it under Unreal/CarlaUE4/Content/Carla."
-  exit 0
-fi
-
-if [[ -d "$CONTENT_FOLDER/.git" ]]; then
+elif [[ -d "$CONTENT_FOLDER/.git" ]]; then
   echo "Using git version of 'Content', skipping update."
 elif [[ -f "$CONTENT_FOLDER/.version" ]]; then
   if [ "$CONTENT_ID" == `cat $VERSION_FILE` ]; then
@@ -124,7 +125,9 @@ function download_duckietown_content {
   echo "Duckietown content updated successfully."
 }
 
-if [[ -f "$DUCKIETOWN_VERSION_FILE" ]]; then
+if $SKIP_DUCKIETOWN ; then
+  echo "Skipping Duckietown content update."
+elif [[ -f "$DUCKIETOWN_VERSION_FILE" ]]; then
   if [ "$DUCKIETOWN_CONTENT_ID" == `cat $DUCKIETOWN_VERSION_FILE` ]; then
     echo "Duckietown content is up-to-date."
   else
