@@ -12,6 +12,7 @@
 #include "HDRIController.generated.h"
 
 class UTextureCube;
+class UDirectionalLightComponent;
 
 USTRUCT(BlueprintType)
 struct FHDRIPreset
@@ -32,6 +33,12 @@ struct FHDRIPreset
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
   FVector ProjectionCenter = FVector(0.0f, 0.0f, 1000.0f);
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
+  float SunIntensity = -1.0f;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HDRI")
+  float SunTemperature = -1.0f;
 };
 
 UCLASS()
@@ -75,6 +82,18 @@ private:
   bool SetFloatProperty(const FName& PropertyName, float Value);
   bool SetVectorProperty(const FName& PropertyName, const FVector& Value);
 
+  // Finds the DirectionalLight owned by the "BP_Sky" actor in the level.
+  UDirectionalLightComponent* FindSunLight();
+
+  // Overrides the sun light intensity/temperature for the given preset,
+  // caching the original values so they can be restored later. Values of -1
+  // are treated as "not set" and leave the corresponding property untouched.
+  void ApplySunOverride(float SunIntensity, float SunTemperature);
+
+  // Restores the sun light values cached by ApplySunOverride (no-op if the
+  // sun was never overridden).
+  void RestoreSunOverride();
+
   UPROPERTY()
   AActor* CachedBackdrop = nullptr;
 
@@ -88,6 +107,15 @@ private:
   UPROPERTY()
   bool bHDRIActive = false;
 
+  // Cached sun light and its original values while an HDRI preset overrides
+  // them. bSunOverridden guards against capturing already-overridden values.
+  UPROPERTY()
+  UDirectionalLightComponent* CachedSunLight = nullptr;
+
+  bool bSunOverridden = false;
+  float SavedSunIntensity = 0.0f;
+  float SavedSunTemperature = 0.0f;
+  bool bSavedUseTemperature = false;
 
   UPROPERTY(EditAnywhere, Category = "HDRI")
   TArray<FHDRIPreset> Presets;

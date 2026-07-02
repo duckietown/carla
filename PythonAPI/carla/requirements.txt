@@ -5,3 +5,5 @@ packaging
 pyelftools
 setuptools
 wheel
+numpy
+pygame

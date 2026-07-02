@@ -11,6 +11,7 @@
 #include "Engine/SkyLight.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkyLightComponent.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/UnrealType.h"
 
@@ -63,6 +64,8 @@ bool AHDRIController::ApplyHDRI(const FString& PresetName)
 
   ScheduleSkyLightRecapture(Preset->Cubemap);
 
+  ApplySunOverride(Preset->SunIntensity, Preset->SunTemperature);
+
   bHDRIActive = true;
   return true;
 }
@@ -95,6 +98,8 @@ void AHDRIController::DisableHDRI()
   {
     CachedBackdrop->SetActorHiddenInGame(true);
   }
+
+  RestoreSunOverride();
 
   ScheduleSkyLightRecapture(nullptr);
 }
@@ -238,4 +243,93 @@ bool AHDRIController::SetVectorProperty(
     }
   }
   return false;
+}
+
+UDirectionalLightComponent* AHDRIController::FindSunLight()
+{
+  TArray<AActor*> AllActors;
+  UGameplayStatics::GetAllActorsOfClass(
+      GetWorld(), AActor::StaticClass(), AllActors);
+
+  for (AActor* Actor : AllActors)
+  {
+    if (!Actor->GetName().StartsWith(TEXT("BP_Sky")) &&
+        !Actor->GetClass()->GetName().StartsWith(TEXT("BP_Sky")))
+    {
+      continue;
+    }
+
+    TArray<AActor*> AttachedActors;
+    Actor->GetAttachedActors(AttachedActors);
+    for (AActor* Attached : AttachedActors)
+    {
+      if (UDirectionalLightComponent* Light =
+              Attached->FindComponentByClass<UDirectionalLightComponent>())
+      {
+        return Light;
+      }
+    }
+
+    UE_LOG(LogCarla, Warning,
+        TEXT("[HDRIController] BP_Sky actor '%s' has no attached DirectionalLight."),
+        *Actor->GetName());
+  }
+
+  return nullptr;
+}
+
+void AHDRIController::ApplySunOverride(float SunIntensity, float SunTemperature)
+{
+  if (SunIntensity < 0.0f && SunTemperature < 0.0f)
+  {
+    return;
+  }
+
+  UDirectionalLightComponent* SunLight = FindSunLight();
+  if (SunLight == nullptr)
+  {
+    UE_LOG(LogCarla, Warning,
+        TEXT("[HDRIController] Could not find a 'BP_Sky' actor with a "
+             "DirectionalLight to override."));
+    return;
+  }
+
+  if (!bSunOverridden)
+  {
+    SavedSunIntensity = SunLight->Intensity;
+    SavedSunTemperature = SunLight->Temperature;
+    bSavedUseTemperature = SunLight->bUseTemperature;
+    CachedSunLight = SunLight;
+    bSunOverridden = true;
+  }
+
+  if (SunIntensity >= 0.0f)
+  {
+    SunLight->SetIntensity(SunIntensity);
+  }
+  if (SunTemperature >= 0.0f)
+  {
+    SunLight->bUseTemperature = true;
+    SunLight->SetTemperature(SunTemperature);
+    SunLight->MarkRenderStateDirty();
+  }
+}
+
+void AHDRIController::RestoreSunOverride()
+{
+  if (!bSunOverridden)
+  {
+    return;
+  }
+
+  if (IsValid(CachedSunLight))
+  {
+    CachedSunLight->SetIntensity(SavedSunIntensity);
+    CachedSunLight->bUseTemperature = bSavedUseTemperature;
+    CachedSunLight->SetTemperature(SavedSunTemperature);
+    CachedSunLight->MarkRenderStateDirty();
+  }
+
+  bSunOverridden = false;
+  CachedSunLight = nullptr;
 }
