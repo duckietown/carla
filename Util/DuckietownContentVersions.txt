@@ -12,4 +12,5 @@
 1.3.0: 1iDT4mjF2Gs2Ak-E7VqU7igbRm4iRNr_S
 1.4.0  1Pqvq8BWiDvoxClxx-duk21K-T5F5tziF
 1.5.0 1rHjtKphrlogX5Nr2wyf3hP9GVfN4IuyV
-Latest: 1rHjtKphrlogX5Nr2wyf3hP9GVfN4IuyV
+1.6.0 15YVfqD6uv1qMJWP_x74cjjsENX13iuxn
+Latest: 15YVfqD6uv1qMJWP_x74cjjsENX13iuxn
