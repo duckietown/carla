@@ -303,6 +303,22 @@ void AHDRIController::ApplySunOverride(float SunIntensity, float SunTemperature)
     bSunOverridden = true;
   }
 
+  OverrideSunIntensity = SunIntensity;
+  OverrideSunTemperature = SunTemperature;
+
+  ApplySunValues(SunLight, SunIntensity, SunTemperature);
+}
+
+void AHDRIController::ApplySunValues(
+    UDirectionalLightComponent* SunLight,
+    float SunIntensity,
+    float SunTemperature)
+{
+  if (SunLight == nullptr)
+  {
+    return;
+  }
+
   if (SunIntensity >= 0.0f)
   {
     SunLight->SetIntensity(SunIntensity);
@@ -313,6 +329,23 @@ void AHDRIController::ApplySunOverride(float SunIntensity, float SunTemperature)
     SunLight->SetTemperature(SunTemperature);
     SunLight->MarkRenderStateDirty();
   }
+}
+
+void AHDRIController::ReapplySunOverride()
+{
+  if (!bSunOverridden)
+  {
+    return;
+  }
+
+  UDirectionalLightComponent* SunLight = FindSunLight();
+  if (SunLight == nullptr)
+  {
+    return;
+  }
+
+  CachedSunLight = SunLight;
+  ApplySunValues(SunLight, OverrideSunIntensity, OverrideSunTemperature);
 }
 
 void AHDRIController::RestoreSunOverride()

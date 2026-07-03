@@ -58,6 +58,8 @@ public:
 
   bool IsHDRIActive() const { return bHDRIActive; }
 
+  void ReapplySunOverride();
+
   UFUNCTION(BlueprintCallable, Category = "HDRI")
   void ApplyHDRIParameters(
       UTextureCube* CubeMap,
@@ -94,6 +96,11 @@ private:
   // sun was never overridden).
   void RestoreSunOverride();
 
+  void ApplySunValues(
+      UDirectionalLightComponent* SunLight,
+      float SunIntensity,
+      float SunTemperature);
+
   UPROPERTY()
   AActor* CachedBackdrop = nullptr;
 
@@ -116,6 +123,9 @@ private:
   float SavedSunIntensity = 0.0f;
   float SavedSunTemperature = 0.0f;
   bool bSavedUseTemperature = false;
+
+  float OverrideSunIntensity = -1.0f;
+  float OverrideSunTemperature = -1.0f;
 
   UPROPERTY(EditAnywhere, Category = "HDRI")
   TArray<FHDRIPreset> Presets;

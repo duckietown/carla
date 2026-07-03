@@ -11,6 +11,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "ConstructorHelpers.h"
 #include "Carla/Game/CarlaStatics.h"
+#include "Carla/Game/CarlaEpisode.h"
+#include "Carla/HDRI/HDRIController.h"
 #include "Carla/Recorder/CarlaRecorder.h"
 #include "Carla/Recorder/CarlaRecorderWeather.h"
 
@@ -104,6 +106,17 @@ void AWeather::NotifyWeather(ASensor* Sensor)
 
     // Call the blueprint that actually changes the weather.
     RefreshWeather(Weather);
+
+    if (bHDRIModeActive)
+    {
+        if (UCarlaEpisode* Episode = UCarlaStatics::GetCurrentEpisode(GetWorld()))
+        {
+            if (AHDRIController* HDRI = Episode->GetHDRIController())
+            {
+                HDRI->ReapplySunOverride();
+            }
+        }
+    }
 }
 
 void AWeather::SetWeather(const FWeatherParameters& InWeather)
