@@ -441,17 +441,42 @@ void ACarlaGameModeBase::SpawnActorFactories()
   {
     if (FactoryClass != nullptr)
     {
-      auto *Factory = World->SpawnActor<ACarlaActorFactory>(FactoryClass);
-      if (Factory != nullptr)
-      {
-        Episode->RegisterActorFactory(*Factory);
-        ActorFactoryInstances.Add(Factory);
-      }
-      else
-      {
-        UE_LOG(LogCarla, Error, TEXT("Failed to spawn actor spawner"));
-      }
+      SpawnAndRegisterActorFactory(*World, FactoryClass);
     }
+  }
+
+  // Factories declared in DefaultGame.ini, so that content packages living
+  // outside Content/Carla can register their actors without editing the
+  // CarlaGameMode asset.
+  for (const auto &FactoryPath : ExtraActorFactories)
+  {
+    auto *FactoryClass = FactoryPath.TryLoadClass<ACarlaActorFactory>();
+    if (FactoryClass == nullptr)
+    {
+      UE_LOG(
+          LogCarla,
+          Warning,
+          TEXT("Cannot load extra actor factory '%s', skipping it."),
+          *FactoryPath.ToString());
+      continue;
+    }
+    SpawnAndRegisterActorFactory(*World, FactoryClass);
+  }
+}
+
+void ACarlaGameModeBase::SpawnAndRegisterActorFactory(
+    UWorld &World,
+    TSubclassOf<ACarlaActorFactory> FactoryClass)
+{
+  auto *Factory = World.SpawnActor<ACarlaActorFactory>(FactoryClass);
+  if (Factory != nullptr)
+  {
+    Episode->RegisterActorFactory(*Factory);
+    ActorFactoryInstances.Add(Factory);
+  }
+  else
+  {
+    UE_LOG(LogCarla, Error, TEXT("Failed to spawn actor spawner"));
   }
 }
 

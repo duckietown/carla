@@ -8,6 +8,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "UObject/SoftObjectPath.h"
 
 #include <compiler/disable-ue4-macros.h>
 #include <boost/optional.hpp>
@@ -31,7 +32,7 @@
 #include "CarlaGameModeBase.generated.h"
 
 /// Base class for the CARLA Game Mode.
-UCLASS(HideCategories=(ActorTick))
+UCLASS(HideCategories=(ActorTick), config=Game)
 class CARLA_API ACarlaGameModeBase : public AGameModeBase
 {
   GENERATED_BODY()
@@ -137,6 +138,8 @@ private:
 
   void SpawnActorFactories();
 
+  void SpawnAndRegisterActorFactory(UWorld &World, TSubclassOf<ACarlaActorFactory> FactoryClass);
+
   void StoreSpawnPoints();
 
   void GenerateSpawnPoints();
@@ -175,6 +178,9 @@ private:
   /// available in game.
   UPROPERTY(Category = "CARLA Game Mode", EditAnywhere)
   TSet<TSubclassOf<ACarlaActorFactory>> ActorFactories;
+
+  UPROPERTY(GlobalConfig)
+  TArray<FSoftClassPath> ExtraActorFactories;
 
   UPROPERTY()
   TArray<FTransform> SpawnPointsTransforms;
