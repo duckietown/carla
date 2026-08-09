@@ -130,6 +130,10 @@ namespace client {
     /// Enable or disable gravity on this actor.
     void SetEnableGravity(bool enabled = true);
 
+    /// Show or hide this actor's meshes. Rendering only; collision, physics
+    /// and tick are left untouched, and attached actors keep rendering.
+    void SetHiddenInGame(bool hidden = true);
+
     rpc::ActorState GetActorState() const;
 
     bool IsAlive() const {

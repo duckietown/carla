@@ -233,6 +233,8 @@ public:
 
   virtual ECarlaServerResponse SetActorEnableGravity(bool bEnabled);
 
+  virtual ECarlaServerResponse SetActorHiddenInGame(bool bHidden);
+
   // Vehicle functions
   virtual ECarlaServerResponse EnableActorConstantVelocity(const FVector&)
   {

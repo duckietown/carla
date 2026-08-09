@@ -551,6 +551,14 @@ namespace detail {
       _client.SetActorEnableGravity(actor.GetId(), enabled);
     }
 
+    void SetActorHiddenInGame(Actor &actor, bool hidden) {
+      _client.SetActorHiddenInGame(actor.GetId(), hidden);
+    }
+
+    void SetActorHiddenInGame(ActorId actor_id, bool hidden) {
+      _client.SetActorHiddenInGame(actor_id, hidden);
+    }
+
     /// @}
     // =========================================================================
     /// @name Operations with vehicles

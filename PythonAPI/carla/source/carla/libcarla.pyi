@@ -343,6 +343,15 @@ class Actor:
             `location (Location)`: meters
         """
 
+    def set_hidden_in_game(self, hidden: bool = True):
+        """Shows or hides this actor's meshes. Affects rendering only: collision,
+        physics and tick keep running, and attached actors such as sensors keep
+        rendering (an attached camera simply stops seeing this actor).
+
+        Args:
+            `hidden (bool, optional)`: Defaults to True.
+        """
+
     def set_simulate_physics(self, enabled: bool = True):
         """Enables or disables the simulation of physics on this actor.
 

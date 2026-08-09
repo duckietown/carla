@@ -304,6 +304,10 @@ namespace detail {
         rpc::ActorId actor,
         bool enabled);
 
+    void SetActorHiddenInGame(
+        rpc::ActorId actor,
+        bool hidden);
+
     void SetActorAutopilot(
         rpc::ActorId vehicle,
         bool enabled);

@@ -2246,6 +2246,31 @@ BIND_SYNC(send) << [this](
     return R<void>::Success();
   };
 
+  BIND_SYNC(set_actor_hidden_in_game) << [this](
+      cr::ActorId ActorId,
+      bool bHidden) -> R<void>
+  {
+    REQUIRE_CARLA_EPISODE();
+    FCarlaActor* CarlaActor = Episode->FindCarlaActor(ActorId);
+    if (!CarlaActor)
+    {
+      return RespondError(
+          "set_actor_hidden_in_game",
+          ECarlaServerResponse::ActorNotFound,
+          " Actor Id: " + FString::FromInt(ActorId));
+    }
+    ECarlaServerResponse Response =
+        CarlaActor->SetActorHiddenInGame(bHidden);
+    if (Response != ECarlaServerResponse::Success)
+    {
+      return RespondError(
+          "set_actor_hidden_in_game",
+          Response,
+          " Actor Id: " + FString::FromInt(ActorId));
+    }
+    return R<void>::Success();
+  };
+
   // ~~ Apply control ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   BIND_SYNC(apply_control_to_vehicle) << [this](

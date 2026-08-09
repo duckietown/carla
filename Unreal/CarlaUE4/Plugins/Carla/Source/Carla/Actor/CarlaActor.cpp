@@ -612,6 +612,21 @@ ECarlaServerResponse FCarlaActor::SetActorEnableGravity(bool bEnabled)
   return ECarlaServerResponse::Success;
 }
 
+ECarlaServerResponse FCarlaActor::SetActorHiddenInGame(bool bHidden)
+{
+  if (IsDormant())
+  {
+  }
+  else
+  {
+    // Rendering only: bHidden propagates to every component this actor owns,
+    // but leaves collision, physics and tick alone. Attached actors (sensors)
+    // hold their own bHidden and keep rendering.
+    GetActor()->SetActorHiddenInGame(bHidden);
+  }
+  return ECarlaServerResponse::Success;
+}
+
 // FVehicleActor functions ---------------------
 
 ECarlaServerResponse FVehicleActor::EnableActorConstantVelocity(const FVector& Velocity)

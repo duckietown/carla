@@ -141,6 +141,10 @@ namespace client {
     GetEpisode().Lock()->SetActorEnableGravity(*this, enabled);
   }
 
+  void Actor::SetHiddenInGame(const bool hidden) {
+    GetEpisode().Lock()->SetActorHiddenInGame(*this, hidden);
+  }
+
   rpc::ActorState Actor::GetActorState() const {
     return GetEpisode().Lock()->GetActorState(*this);
   }
