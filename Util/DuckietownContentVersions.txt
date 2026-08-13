@@ -1,20 +1,10 @@
-# Here we keep a list of the Google Drive file id's of the Duckietown Content
-# files. The last id in the list is picked up by the Update.sh script to
-# download the last version of the contents.
+# Here we keep a list of the Duckietown Content versions. The "Latest:" line is
+# the one Update.sh and Update.bat pick up.
 #
-# When adding a new version, append it below AND update the "Latest:" line and
-# the link in this comment to the new id.
+# Each entry is the URL of a content archive. The archive contains a single
+# top-level Duckietown/ folder and is extracted into Unreal/CarlaUE4/Content.
 #
-# You can download the latest one directly from
-#
-#     https://drive.google.com/file/d/1SCrAw1ADuCxj9gpZ840xuukNSb4QiwZt/view?usp=drive_link
+# When adding a new version, append it below AND update the "Latest:" line.
 
-1.0.0: 14TNT9bs7zRSPGNlbHDGaeBbtUziXq3TC
-1.1.0: 1s-XEvZGA6nUqxIH-nV7KutjPdx4KMGgP
-1.2.0: 1BrlQOwhzIj8DZ2JzMOZ2pjYeKVL3CJSM
-1.3.0: 1iDT4mjF2Gs2Ak-E7VqU7igbRm4iRNr_S
-1.4.0: 1Pqvq8BWiDvoxClxx-duk21K-T5F5tziF
-1.5.0: 1rHjtKphrlogX5Nr2wyf3hP9GVfN4IuyV
-1.6.0: 15YVfqD6uv1qMJWP_x74cjjsENX13iuxn
-1.7.0: 1SCrAw1ADuCxj9gpZ840xuukNSb4QiwZt
-Latest: 1SCrAw1ADuCxj9gpZ840xuukNSb4QiwZt
+1.7.0: https://github.com/duckietown/carla/releases/download/1.0/DuckietownContent-1.7.0.tar.gz
+Latest: https://github.com/duckietown/carla/releases/download/1.0/DuckietownContent-1.7.0.tar.gz

@@ -59,7 +59,7 @@ CONTENT_LINK=https://carla-assets.s3.us-east-005.backblazeb2.com/${CONTENT_ID}.t
 VERSION_FILE="${CONTENT_FOLDER}/.version"
 
 DUCKIETOWN_CONTENT_FOLDER="${SCRIPT_DIR}/Unreal/CarlaUE4/Content/Duckietown"
-DUCKIETOWN_CONTENT_ID=$(tac $SCRIPT_DIR/Util/DuckietownContentVersions.txt | egrep -m 1 . | rev | cut -d' ' -f1 | rev)
+DUCKIETOWN_CONTENT_LINK=$(tac $SCRIPT_DIR/Util/DuckietownContentVersions.txt | egrep -m 1 . | rev | cut -d' ' -f1 | rev)
 DUCKIETOWN_VERSION_FILE="${DUCKIETOWN_CONTENT_FOLDER}/.version"
 
 function download_content {
@@ -116,19 +116,26 @@ function download_duckietown_content {
     mv -v "$DUCKIETOWN_CONTENT_FOLDER" "${DUCKIETOWN_CONTENT_FOLDER}_$(date +%Y%m%d%H%M%S)"
   fi
   mkdir -p "$DUCKIETOWN_CONTENT_FOLDER"
-  echo "Downloading Duckietown content from Google Drive (id: ${DUCKIETOWN_CONTENT_ID})..."
-  python3 ${SCRIPT_DIR}/Util/download_from_gdrive.py ${DUCKIETOWN_CONTENT_ID} DuckietownContent.tar.gz
+
+  echo "Downloading Duckietown content from ${DUCKIETOWN_CONTENT_LINK}..."
+  if hash aria2c 2>/dev/null; then
+    aria2c -j${MAX_PARALLELL_DOWNLOADS} -x${MAX_CONNECTIONS_PER_SERVER} \
+      -o DuckietownContent.tar.gz "${DUCKIETOWN_CONTENT_LINK}"
+  else
+    wget -c "${DUCKIETOWN_CONTENT_LINK}" -O DuckietownContent.tar.gz
+  fi
+
   echo "Extracting Duckietown content..."
   tar -xzf DuckietownContent.tar.gz -C Unreal/CarlaUE4/Content
   rm DuckietownContent.tar.gz
-  echo "$DUCKIETOWN_CONTENT_ID" > "$DUCKIETOWN_VERSION_FILE"
+  echo "$DUCKIETOWN_CONTENT_LINK" > "$DUCKIETOWN_VERSION_FILE"
   echo "Duckietown content updated successfully."
 }
 
 if $SKIP_DUCKIETOWN ; then
   echo "Skipping Duckietown content update."
 elif [[ -f "$DUCKIETOWN_VERSION_FILE" ]]; then
-  if [ "$DUCKIETOWN_CONTENT_ID" == `cat $DUCKIETOWN_VERSION_FILE` ]; then
+  if [ "$DUCKIETOWN_CONTENT_LINK" == `cat $DUCKIETOWN_VERSION_FILE` ]; then
     echo "Duckietown content is up-to-date."
   else
     download_duckietown_content

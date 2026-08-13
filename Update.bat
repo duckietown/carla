@@ -11,10 +11,9 @@ rem Treat it as a starting point rather than a supported path, and expect to fix
 rem something. If you get it working, please open a pull request.
 rem
 rem It needs, beyond the requirements of the CARLA section:
-rem   * python on PATH, with the "requests" package installed
-rem       py -m pip install requests
 rem   * tar.exe, which ships with Windows 10 1803 and newer (7-Zip is used as a
 rem     fallback if tar is missing)
+rem   * curl.exe, same vintage (PowerShell is used as a fallback)
 rem
 rem ============================================================================
 rem -- Set up environment ------------------------------------------------------
@@ -32,7 +31,6 @@ set DUCKIETOWN_CONTENT_FOLDER=%UE4_CONTENT_ROOT%\Duckietown
 set DUCKIETOWN_VERSION_FILE=%DUCKIETOWN_CONTENT_FOLDER%\.version
 set DUCKIETOWN_VERSIONS=%SCRIPT_DIR%Util\DuckietownContentVersions.txt
 set DUCKIETOWN_ARCHIVE=%SCRIPT_DIR%DuckietownContent.tar.gz
-set GDRIVE_SCRIPT=%SCRIPT_DIR%Util\download_from_gdrive.py
 
 set SKIP_DOWNLOAD=false
 set SKIP_DUCKIETOWN=false
@@ -123,23 +121,24 @@ if not exist "%DUCKIETOWN_VERSIONS%" (
   goto error_duckietown
 )
 
-rem The file ends with a "Latest: <google-drive-id>" line. Drive IDs vary in
-rem length, so pull the token after the colon rather than slicing the string.
-set DUCKIETOWN_CONTENT_ID=
-for /F "tokens=2 delims=: " %%a in ('findstr /B "Latest:" "%DUCKIETOWN_VERSIONS%"') do set DUCKIETOWN_CONTENT_ID=%%a
+rem The file ends with a "Latest: <url>" line. Split on space only and take the
+rem remainder: the URL contains colons, so ':' must not be a delimiter, and the
+rem string cannot be sliced at a fixed length either.
+set DUCKIETOWN_CONTENT_LINK=
+for /F "tokens=1,* delims= " %%a in ('findstr /B "Latest:" "%DUCKIETOWN_VERSIONS%"') do set DUCKIETOWN_CONTENT_LINK=%%b
 
-if "%DUCKIETOWN_CONTENT_ID%"=="" (
-  echo %FILE_N% Could not read the "Latest:" id from "%DUCKIETOWN_VERSIONS%".
+if "%DUCKIETOWN_CONTENT_LINK%"=="" (
+  echo %FILE_N% Could not read the "Latest:" entry from "%DUCKIETOWN_VERSIONS%".
   goto error_duckietown
 )
 
-echo %FILE_N% Duckietown content id: %DUCKIETOWN_CONTENT_ID%
+echo %FILE_N% Duckietown content: %DUCKIETOWN_CONTENT_LINK%
 
 rem Skip the download when the installed version already matches.
 if not exist "%DUCKIETOWN_VERSION_FILE%" goto duckietown_download
 set INSTALLED_ID=
 for /F "usebackq delims=" %%a in ("%DUCKIETOWN_VERSION_FILE%") do set INSTALLED_ID=%%a
-if "%INSTALLED_ID%"=="%DUCKIETOWN_CONTENT_ID%" (
+if "%INSTALLED_ID%"=="%DUCKIETOWN_CONTENT_LINK%" (
   echo %FILE_N% Duckietown content is up-to-date.
   goto success
 )
@@ -154,15 +153,16 @@ if exist "%DUCKIETOWN_CONTENT_FOLDER%" (
   if %errorlevel% neq 0 goto error_duckietown
 )
 
-if not exist "%GDRIVE_SCRIPT%" (
-  echo %FILE_N% Cannot find "%GDRIVE_SCRIPT%".
-  goto error_duckietown
+rem curl ships with Windows 10 1803 and newer; fall back to PowerShell if absent.
+echo %FILE_N% Downloading Duckietown content from %DUCKIETOWN_CONTENT_LINK%
+where curl >nul 2>nul
+if %errorlevel%==0 (
+  curl -fL -C - -o "%DUCKIETOWN_ARCHIVE%" "%DUCKIETOWN_CONTENT_LINK%"
+) else (
+  powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%DUCKIETOWN_CONTENT_LINK%', '%DUCKIETOWN_ARCHIVE%')"
 )
-
-echo %FILE_N% Downloading Duckietown content from Google Drive...
-python "%GDRIVE_SCRIPT%" %DUCKIETOWN_CONTENT_ID% "%DUCKIETOWN_ARCHIVE%"
 if %errorlevel% neq 0 (
-  echo %FILE_N% Download failed. Is python on PATH with the "requests" package installed?
+  echo %FILE_N% Download failed.
   goto error_duckietown
 )
 
@@ -184,7 +184,7 @@ if %errorlevel%==0 (
 )
 
 del "%DUCKIETOWN_ARCHIVE%"
-echo %DUCKIETOWN_CONTENT_ID%> "%DUCKIETOWN_VERSION_FILE%"
+echo %DUCKIETOWN_CONTENT_LINK%> "%DUCKIETOWN_VERSION_FILE%"
 echo %FILE_N% Duckietown content has been installed in "%DUCKIETOWN_CONTENT_FOLDER%".
 
 goto success

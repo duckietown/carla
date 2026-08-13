@@ -54,35 +54,16 @@ Data scarcity is the biggest bottleneck for end-to-end systems in Duckietown. Re
 
 ## Prebuilt release
 
-<!-- ───────────────────────────────────────────────────────────────────────────
-  PLACEHOLDERS — replace every <ALL_CAPS> token before publishing:
-
-    <RELEASE_TAG>       e.g. duckietown-0.9.16-1.7.0
-    <RELEASE_DATE>      e.g. 2026-08-09
-    <RELEASE_URL>       GitHub release page
-    <PACKAGE_TARBALL>   e.g. CARLA_Duckietown_0.9.16_Linux.tar.gz
-    <PACKAGE_SIZE>      combined size of all parts, e.g. 5.0 GB
-    <PART_COUNT>        how many parts, e.g. 3
-    <LAST_PART>         index of the last part, zero padded, e.g. 02
-    <PART_RANGE>        the loop list, e.g. 00 01 02
-    <PART_URL_BASE>     URL prefix the parts sit under, e.g.
-                        https://github.com/duckietown/carla/releases/download/<RELEASE_TAG>
-    <WHEEL_PY310> / <WHEEL_PY312>  e.g. carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl
-    <WHEEL_PY310_URL> / <WHEEL_PY312_URL>
-    <UNPACKED_SIZE>     size once extracted, e.g. 13 GB
-    <DEFAULT_MAP>       map the package boots into: duckietown_01
-─────────────────────────────────────────────────────────────────────────── -->
-
 No Unreal Engine, no 2-hour compile: the packaged build ships the simulator with
 all six Duckietown maps baked in, plus a matching Python API wheel. The package is
 Linux-only — on Windows, see [Windows](#windows) below.
 
-**Release `<RELEASE_TAG>`** — <RELEASE_DATE> · [release notes](<RELEASE_URL>)
+**Release `1.0`** — 2026-08-13 · [release notes](https://github.com/duckietown/carla/releases/tag/1.0)
 
 ### Requirements
 
 * __Ubuntu 22.04 or 26.04__ and an __NVIDIA GPU__ with at least 8 GB of VRAM.
-* __<UNPACKED_SIZE> of disk space__ once unpacked.
+* __12 GB of disk space__ once unpacked.
 * __Python 3.10 or 3.12__ — the client is a compiled extension, so it works only
   with the exact version its wheel was built for. 3.10 is the system Python on
   22.04, 3.12 on 26.04.
@@ -96,9 +77,9 @@ sudo apt-get install libvulkan1
 
 | File | Contents | Size |
 | --- | --- | --- |
-| [`<PACKAGE_TARBALL>.part00` … `.part<LAST_PART>`](<RELEASE_URL>) | Simulator, maps, assets, HDRI presets, the scripts and both wheels. Split across <PART_COUNT> parts to stay under the 2 GB limit on release assets | `<PACKAGE_SIZE>` total |
-| [`<WHEEL_PY310>`](<WHEEL_PY310_URL>) | Python API client, Python 3.10 (Ubuntu 22.04) | — |
-| [`<WHEEL_PY312>`](<WHEEL_PY312_URL>) | Python API client, Python 3.12 (Ubuntu 26.04) | — |
+| [`CARLA_Duckietown-1.0.tar.gz.part00` … `.part02`](https://github.com/duckietown/carla/releases/tag/1.0) | Simulator, maps, assets, HDRI presets, the scripts and both wheels. Split across three parts to stay under the 2 GB limit on release assets | `5.0 GB` total |
+| [`carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl`](https://github.com/duckietown/carla/releases/download/1.0/carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl) | Python API client, Python 3.10 (Ubuntu 22.04) | ~30 MB |
+| [`carla_duckietown-1.0-cp312-cp312-linux_x86_64.whl`](https://github.com/duckietown/carla/releases/download/1.0/carla_duckietown-1.0-cp312-cp312-linux_x86_64.whl) | Python API client, Python 3.12 (Ubuntu 26.04) | ~30 MB |
 
 ### Installing
 
@@ -108,8 +89,13 @@ to be reassembled on disk first:
 
 ```sh
 mkdir -p ~/CarlaDuckietown && cd ~/CarlaDuckietown
-for p in <PART_RANGE>; do curl -fL -C - -O <PART_URL_BASE>/<PACKAGE_TARBALL>.part$p; done
-cat <PACKAGE_TARBALL>.part* | tar -xzf - && rm <PACKAGE_TARBALL>.part*
+
+for p in 00 01 02; do
+  curl -fL -C - -O "https://github.com/duckietown/carla/releases/download/1.0/CARLA_Duckietown-1.0.tar.gz.part$p"
+done
+
+cat CARLA_Duckietown-1.0.tar.gz.part* | tar -xzf -
+rm CARLA_Duckietown-1.0.tar.gz.part*
 ```
 
 `curl -C -` resumes, so re-running the loop after a dropped connection picks up
@@ -129,7 +115,7 @@ Python API, skip the package entirely and install the wheel for your Python
 version straight from the release:
 
 ```sh
-python3 -m pip install <WHEEL_PY310_URL>
+python3 -m pip install https://github.com/duckietown/carla/releases/download/1.0/carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl
 ```
 
 Keep the client and the server on the same release. A wheel from a different
@@ -147,7 +133,7 @@ python3 -m pip uninstall carla
 ### Running
 
 ```sh
-./CarlaUE4.sh                              # windowed, boots into <DEFAULT_MAP>
+./CarlaUE4.sh                              # windowed, boots into duckietown_01
 ./CarlaUE4.sh -RenderOffScreen             # headless, for data generation
 ./CarlaUE4.sh -quality-level=Low           # cheaper rendering
 ./CarlaUE4.sh -carla-rpc-port=3000         # non-default port

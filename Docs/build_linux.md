@@ -44,13 +44,13 @@ CARLA requires numerous software tools for compilation. Some are built during th
 #### Ubuntu 22.04
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential g++-12 cmake ninja-build libvulkan1 python3 python3-dev python3-pip python3-venv python3-requests autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev aria2
+sudo apt-get install build-essential g++-12 cmake ninja-build libvulkan1 python3 python3-dev python3-pip python3-venv autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev aria2
 ```
 
 #### Ubuntu 26.04
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential g++-12 cmake ninja-build lld libvulkan1 python3 python3-dev python3-pip python3-venv python3-requests autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff-dev libjpeg-dev aria2
+sudo apt-get install build-essential g++-12 cmake ninja-build lld libvulkan1 python3 python3-dev python3-pip python3-venv autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff-dev libjpeg-dev aria2
 ```
 
 !!! important
@@ -63,10 +63,7 @@ sudo apt-get install build-essential g++-12 cmake ninja-build lld libvulkan1 pyt
 !!! note
     `g++-12` is named explicitly because that is the version the build expects, but the host compiler does less work than it appears to: `Setup.sh` switches to the clang toolchain bundled with Unreal Engine for the bulk of the compilation. If `g++-12` is unavailable from the default repositories on your release, the [Toolchain PPA](https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test) provides it.
 
-!!! important
-    `python3-requests` is required by [`Update.sh`](#download-the-content) — the Duckietown content is fetched from Google Drive by `Util/download_from_gdrive.py`, which imports `requests`. Without it the content download fails with a `ModuleNotFoundError` before anything is compiled.
-
-`aria2` is optional but recommended: `Update.sh` will use `aria2c` to fetch the CARLA content archive over multiple connections, falling back to `wget` when it is missing. The Duckietown archive is always a single-stream download.
+`aria2` is optional but recommended: `Update.sh` will use `aria2c` to fetch both content archives over multiple connections, falling back to `wget` when it is missing.
 
 ## Building Unreal Engine
 
