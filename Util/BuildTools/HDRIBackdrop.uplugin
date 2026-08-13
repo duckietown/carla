@@ -1,0 +1,17 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "HDRIBackdrop",
+	"Description": "Content-only fork of Epic's HDRIBackdrop plugin. Shadows the engine plugin of the same name so that the backdrop Blueprint is staged into packaged (non-editor) builds. The engine version's only module is Editor-type and links UnrealEd, which cannot be instantiated for a Shipping target; that module contained no runtime code (a Place Actors category and an editor icon style), so it is dropped here and only the content is kept.",
+	"Category": "Rendering",
+	"CreatedBy": "Epic Games, Inc.",
+	"CreatedByURL": "http://epicgames.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EnabledByDefault": false,
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": false
+}

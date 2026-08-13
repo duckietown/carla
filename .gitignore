@@ -9,6 +9,9 @@ Plugins
 !Unreal/CarlaUE4/Plugins
 Unreal/CarlaUE4/Plugins/Streetmap
 Unreal/CarlaUE4/Plugins/HoudiniEngine
+# Provisioned from ${UE4_ROOT} by Util/BuildTools/BuildUE4Plugins.sh. Not
+# committed: the assets are Epic's, and every builder already has the engine.
+Unreal/CarlaUE4/Plugins/HDRIBackdrop
 build/
 
 /ExportedMaps

@@ -83,8 +83,13 @@ public class Carla : ModuleRules
         "Renderer",
         "ProceduralMeshComponent",
         "MeshDescription",
-        "Projects",
-        "HDRIBackdrop"
+        "Projects"
+        // NOTE: do not add "HDRIBackdrop" here. Its only module is Editor-type
+        // and links UnrealEd, so a Shipping target fails to instantiate it.
+        // AHDRIController never includes its headers -- it loads
+        // /HDRIBackdrop/Blueprints/HDRIBackdrop.HDRIBackdrop_C by path at
+        // runtime and drives it through reflection, so no build-time link is
+        // needed.
         // ... add other public dependencies that you statically link with here ...
       }
       );
