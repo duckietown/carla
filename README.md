@@ -1,136 +1,258 @@
-CARLA Simulator
-===============
+<div align="center">
 
-[![Documentation](https://readthedocs.org/projects/carla/badge/?version=latest)](http://carla.readthedocs.io) 
 
-[![carla.org](Docs/img/btn/web.png)](http://carla.org)
-[![download](Docs/img/btn/download.png)](https://carla.readthedocs.io/en/latest/download/)
-[![documentation](Docs/img/btn/docs.png)](http://carla.readthedocs.io)
-[![forum](Docs/img/btn/forum.png)](https://github.com/carla-simulator/carla/discussions)
-[![discord](Docs/img/btn/chat.png)](https://discord.gg/8kqACuC)
-[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20CARLA%20Simulator%20Guru-006BFF)](https://gurubase.io/g/carla-simulator)
+<h1>CARLA Duckietown</h1>
 
-CARLA is an open-source simulator for autonomous driving research. CARLA has been developed from the ground up to support development, training, and
-validation of autonomous driving systems. In addition to open-source code and protocols, CARLA provides open digital assets (urban layouts, buildings,
-vehicles) that were created for this purpose and can be used freely. The simulation platform supports flexible specification of sensor suites and
-environmental conditions.
+<img src="Docs/img/duckietown.png" width="640" alt="CARLA for Duckietown"/>
 
-[![CARLA Video](Docs/img/0_9_15_thumbnail.webp)](https://www.youtube.com/watch?v=q4V9GYjA1pE )
+<br/>
 
->[!NOTE]
->This is the development branch `ue4-dev` for the **Unreal Engine 4.26 version of CARLA**. This branch exists in parallel with the Unreal Engine 5.3 version of CARLA, in the `ue5-dev` branch. Please be sure that this version of CARLA is suitable for your needs as there are significant differences between the UE 4.26 and UE 5.3 versions of CARLA. 
+<p>
+  <img src="https://img.shields.io/badge/Unreal%20Engine-4.26-0E1128?style=flat-square&logo=unrealengine&logoColor=white" alt="Unreal Engine 4.26"/>
+  <img src="https://img.shields.io/badge/Ubuntu-22.04%20%7C%2026.04-E95420?style=flat-square&logo=ubuntu&logoColor=white" alt="Ubuntu 22.04 or 26.04"/>
+  <img src="https://img.shields.io/badge/License-MIT-FFC300?style=flat-square" alt="MIT License"/>
+</p>
 
-### Download CARLA
+<p>
+  <a href="#features"><b>Features</b></a> &nbsp;·&nbsp;
+  <a href="#prebuilt-release"><b>Prebuilt release</b></a> &nbsp;·&nbsp;
+  <a href="#building-from-source"><b>Building from source</b></a> &nbsp;·&nbsp;
+  <a href="#getting-started"><b>Getting started</b></a> &nbsp;·&nbsp;
+  <a href="#documentation"><b>Documentation</b></a>
+</p>
 
-Linux:
-* [**Get CARLA overnight build**](https://tiny.carla.org/carla-latest-linux)
-* [**Get AdditionalMaps overnight build**](https://tiny.carla.org/additional-maps-latest-linux)
+</div>
 
-Windows:
-* [**Get CARLA overnight build**](https://tiny.carla.org/carla-latest-windows)
-* [**Get AdditionalMaps overnight build**](https://tiny.carla.org/additional-maps-latest-windows)
+Data scarcity is the biggest bottleneck for end-to-end systems in Duckietown. Real footage is limited, and manual labeling is painstakingly slow. CARLA Duckietown solves this by providing photorealistic simulation environments equipped with modular sensors, dynamic lighting, and fully controllable traffic and props.
 
->[!WARNING]
->The CARLA package downloads are now provided using the BackBlaze CDN. The Amazon Web Service download links have been discontinued. Please ensure you update any relevant information in repositories using the CARLA simulator package versions. 
+> [!IMPORTANT]
+> **This is a modified CARLA, not an asset pack.** The simulator and the Python
+> client are both changed, so they are not interchangeable with stock CARLA. Use
+> the client that comes with this project — the `carla` package from PyPI will not
+> work against this server, and this client will not work against an upstream
+> CARLA server. Match the client and the server to the same build.
 
-### Recommended system
+## Features
 
-* Intel i7 gen 9th - 11th / Intel i9 gen 9th - 11th / AMD ryzen 7 / AMD ryzen 9
-* +32 GB RAM memory
-* NVIDIA RTX 3070 / NVIDIA RTX 3080 / NVIDIA RTX 4090
-* Ubuntu 20.04
+|  |  |
+|---|---|
+| **Six Duckietown maps** | Complete layouts with full road network data, so waypoints, the Traffic Manager and autopilot all work as usual. |
+| **Duckiebot** | Drive the Duckiebot like any other CARLA vehicle, as well as rubber duckies to scatter across the map. |
+| **Signs** | The Duckietown sign set. Place a sign anywhere and choose which one it shows. |
+| **Duckietown segmentation** | Seven extra semantic labels for lane markings, road surface, stop lines, signs, Duckiebots and duckies. |
+| **HDRI backdrops** | Switch the scene's lighting and background between named presets while the simulation runs. Every map ships with its own. |
+| **Hide actors from cameras** | Make a vehicle invisible to sensors while it keeps driving and colliding — for clean ego-view capture. |
+| **Ready-made scripts** | Drive manually, generate traffic, scatter rubber duckies and cycle through lighting presets. |
+
+### Map-Overview
+
+| `duckietown_01` | `duckietown_02` | `duckietown_03` | `duckietown_04` | `duckietown_05` | `duckietown_06` |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| <img src="Docs/img/maps/duckietown_01.png" width="110" alt="duckietown_01 layout"/> | <img src="Docs/img/maps/duckietown_02.png" width="110" alt="duckietown_02 layout"/> | <img src="Docs/img/maps/duckietown_03.png" width="110" alt="duckietown_03 layout"/> | <img src="Docs/img/maps/duckietown_04.png" width="110" alt="duckietown_04 layout"/> | <img src="Docs/img/maps/duckietown_05.png" width="110" alt="duckietown_05 layout"/> | <img src="Docs/img/maps/duckietown_06.png" width="110" alt="duckietown_06 layout"/> |
+
+---
+
+## Prebuilt release
+
+<!-- ───────────────────────────────────────────────────────────────────────────
+  PLACEHOLDERS — replace every <ALL_CAPS> token before publishing:
+
+    <RELEASE_TAG>       e.g. duckietown-0.9.16-1.7.0
+    <RELEASE_DATE>      e.g. 2026-08-09
+    <RELEASE_URL>       GitHub release page
+    <PACKAGE_TARBALL>   e.g. CARLA_Duckietown_0.9.16_Linux.tar.gz
+    <PACKAGE_SIZE>      combined size of all parts, e.g. 5.0 GB
+    <PART_COUNT>        how many parts, e.g. 3
+    <LAST_PART>         index of the last part, zero padded, e.g. 02
+    <PART_RANGE>        the loop list, e.g. 00 01 02
+    <PART_URL_BASE>     URL prefix the parts sit under, e.g.
+                        https://github.com/duckietown/carla/releases/download/<RELEASE_TAG>
+    <WHEEL_PY310> / <WHEEL_PY312>  e.g. carla-0.9.16-cp310-cp310-linux_x86_64.whl
+    <WHEEL_PY310_URL> / <WHEEL_PY312_URL>
+    <UNPACKED_SIZE>     size once extracted, e.g. 13 GB
+    <DEFAULT_MAP>       map the package boots into: duckietown_01
+─────────────────────────────────────────────────────────────────────────── -->
+
+No Unreal Engine, no 2-hour compile: the packaged build ships the simulator with
+all six Duckietown maps baked in, plus a matching Python API wheel. The package is
+Linux-only — on Windows, see [Windows](#windows) below.
+
+**Release `<RELEASE_TAG>`** — <RELEASE_DATE> · [release notes](<RELEASE_URL>)
+
+### Requirements
+
+* __Ubuntu 22.04 or 26.04__ and an __NVIDIA GPU__ with at least 8 GB of VRAM.
+* __<UNPACKED_SIZE> of disk space__ once unpacked.
+* __Python 3.10 or 3.12__ — the client is a compiled extension, so it works only
+  with the exact version its wheel was built for. 3.10 is the system Python on
+  22.04, 3.12 on 26.04.
+* One runtime library — the rest of the build requirements do not apply:
+
+```sh
+sudo apt-get install libvulkan1
+```
+
+### Downloads
+
+| File | Contents | Size |
+| --- | --- | --- |
+| [`<PACKAGE_TARBALL>.part00` … `.part<LAST_PART>`](<RELEASE_URL>) | Simulator, maps, assets, HDRI presets, the scripts and both wheels. Split across <PART_COUNT> parts to stay under the 2 GB limit on release assets | `<PACKAGE_SIZE>` total |
+| [`<WHEEL_PY310>`](<WHEEL_PY310_URL>) | Python API client, Python 3.10 (Ubuntu 22.04) | — |
+| [`<WHEEL_PY312>`](<WHEEL_PY312_URL>) | Python API client, Python 3.12 (Ubuntu 26.04) | — |
+
+### Installing
+
+__1.__ **Download and unpack the simulator.** The parts are only meaningful
+concatenated, so fetch them all and pipe them straight into `tar` — nothing needs
+to be reassembled on disk first:
+
+```sh
+mkdir -p ~/CarlaDuckietown && cd ~/CarlaDuckietown
+for p in <PART_RANGE>; do curl -fL -C - -O <PART_URL_BASE>/<PACKAGE_TARBALL>.part$p; done
+cat <PACKAGE_TARBALL>.part* | tar -xzf - && rm <PACKAGE_TARBALL>.part*
+```
+
+`curl -C -` resumes, so re-running the loop after a dropped connection picks up
+where it left off rather than starting over.
+
+__2.__ **Install the Python client.** Use the wheel bundled under
+`PythonAPI/carla/dist` — it is built against this exact release. A `carla` wheel
+from PyPI will not work:
+
+```sh
+python3 -m pip install --upgrade -r PythonAPI/carla/requirements.txt
+python3 -m pip install PythonAPI/carla/dist/carla-*.whl
+```
+
+### Running
+
+```sh
+./CarlaUE4.sh                              # windowed, boots into <DEFAULT_MAP>
+./CarlaUE4.sh -RenderOffScreen             # headless, for data generation
+./CarlaUE4.sh -quality-level=Low           # cheaper rendering
+./CarlaUE4.sh -carla-rpc-port=3000         # non-default port
+```
+
+The server listens on ports 2000 and 2001 by default. The first launch is slower
+while shaders warm up. With the simulator running, continue to
+[Getting started](#getting-started) — every script works the same as in a source
+build.
+
+**Frame rate.** Rendering is capped at 60 FPS. The Duckietown maps are light
+enough that an uncapped server idles at several hundred frames per second, which
+buys nothing and makes some GPUs whine. To change it, edit `FrameRateLimit` in
+`CarlaUE4/Config/DefaultGameUserSettings.ini`, or in
+`~/.config/Epic/CarlaUE4/Saved/Config/LinuxNoEditor/GameUserSettings.ini` once
+that file exists — the saved copy wins. `0` is uncapped.
+
+Note that this is a *rendering* cap and is independent of simulation timing: the
+`-benchmark` and `-fps=` command line flags have no effect on a packaged build,
+and for reproducible, evenly spaced sensor captures you want
+`fixed_delta_seconds` and `synchronous_mode` from the client instead.
+
+---
+
+## Building from source
+
+Build from source if you want the Unreal Editor, need to change the C++ code, or want to
+author your own maps and assets. Otherwise the [prebuilt release](#prebuilt-release) above is
+the shorter road.
+
+**→ [Linux build guide](Docs/build_linux.md)**
+
+The full procedure lives there. In outline:
+
+| | |
+|---|---|
+| **1. Install the prerequisites** | A handful of apt packages. Ubuntu 22.04 and 26.04 are the supported versions. |
+| **2. Build Unreal Engine 4.26** | CARLA's [patched fork](https://github.com/CarlaUnreal/UnrealEngine) — the Epic Games Launcher build will not work, and cloning it needs a GitHub account linked to Epic. This is the bulk of the time. |
+| **3. Clone and fetch the content** | `git clone -b ue4-dev`, then `./Update.sh` to pull the CARLA and Duckietown asset archives. |
+| **4. `make PythonAPI` and `make launch`** | Builds the client wheel, then compiles the server and opens the Editor. |
+
+Budget __3-4 hours__ and __130 GB of disk space__; most of both goes to Unreal Engine. A
+dedicated NVIDIA GPU with 8 GB of VRAM or more and 32 GB of RAM make for a comfortable
+workflow in the Editor. The [F.A.Q.](Docs/build_faq.md) covers the most common complications.
+
+### Windows
+
+We develop exclusively on Ubuntu and cannot make any guarantees for Windows.
+That said, CARLA itself builds natively on Windows and this fork keeps that
+toolchain intact, so a Windows build should be within reach: follow the
+[upstream Windows instructions](https://carla.readthedocs.io/en/latest/build_windows/),
+substituting this repository for `carla-simulator/carla`.
+
+[`Update.bat`](Update.bat) mirrors `Update.sh`, including the Duckietown content
+download and the same `-s` / `-d` flags — but that half has never been run on
+Windows, so expect to fix something. It additionally needs `python` on `PATH`
+with the `requests` package, and `tar.exe` (shipped with Windows 10 1803 and
+newer, with 7-Zip as a fallback). If it fails, the archive can always be fetched
+by hand from the ID in
+[`Util/DuckietownContentVersions.txt`](Util/DuckietownContentVersions.txt) and
+extracted into `Unreal\CarlaUE4\Content`.
+
+---
+
+## Getting started
+
+With the simulator running, in a second terminal:
+
+```sh
+cd PythonAPI/duckietown
+python3 manual_control.py          # drive a Duckiebot
+```
+
+<table>
+<tr>
+<td valign="top" width="42%">
+
+**Controls**
+
+| Key | Action |
+|---|---|
+| `W` `A` `S` `D` | drive |
+| `U` / `Shift+U` | next / previous map |
+| `J` / `Shift+J` | cycle HDRI presets |
+| `` ` `` or `N` | next sensor |
+| `P` | toggle autopilot |
+| `H` | full key list |
+
+</td>
+<td valign="top">
+
+**Scripts**
+
+| Script | Purpose |
+|---|---|
+| `manual_control.py` | Drive a Duckiebot; switch maps, lighting and sensors live |
+| `generate_traffic.py` | Populate a map with autopiloted Duckiebots |
+| `place_duckies.py` | Scatter rubber duckies along the road; `--cleanup` removes them |
+| `hdri_control.py` | List, apply and disable HDRI presets |
+
+</td>
+</tr>
+</table>
+
+---
 
 ## Documentation
 
-The [CARLA documentation](https://carla.readthedocs.io/en/latest/) is hosted on ReadTheDocs. Please see the following key links:
+- **[Python API reference](Docs/python_api.md)** — including `set_hdri_preset`, `get_hdri_presets` and `set_hidden_in_game`
+- **[Sensors reference](Docs/ref_sensors.md)** — semantic tags, including Duckietown tags `29`–`35`
+- **[Blueprint library](Docs/bp_library.md)** — every spawnable actor
+- **[Core concepts](Docs/core_concepts.md)** — client, world, actors, sensors
 
-- [Building on Linux](https://carla.readthedocs.io/en/latest/build_linux/)
-- [Building on Windows](https://carla.readthedocs.io/en/latest/build_windows/)
-- [First steps](https://carla.readthedocs.io/en/latest/tuto_first_steps/)
-- [CARLA asset catalogue](https://carla.readthedocs.io/en/latest/catalogue/)
-- [Python API reference](https://carla.readthedocs.io/en/latest/python_api/)
-- [Blueprint library](https://carla.readthedocs.io/en/latest/bp_library/)
+---
 
-## CARLA Ecosystem
-Repositories associated with the CARLA simulation platform:
+## Contributing
 
-* [**CARLA Autonomous Driving leaderboard**](https://leaderboard.carla.org/): Automatic platform to validate Autonomous Driving stacks
-* [**Scenario_Runner**](https://github.com/carla-simulator/scenario_runner): Engine to execute traffic scenarios in CARLA 0.9.X
-* [**ROS-bridge**](https://github.com/carla-simulator/ros-bridge): Interface to connect CARLA 0.9.X to ROS
-* [**Driving-benchmarks**](https://github.com/carla-simulator/driving-benchmarks): Benchmark tools for Autonomous Driving tasks
-* [**Conditional Imitation-Learning**](https://github.com/felipecode/coiltraine): Training and testing Conditional Imitation Learning models in CARLA
-* [**AutoWare AV stack**](https://github.com/carla-simulator/carla-autoware): Bridge to connect AutoWare AV stack to CARLA
-* [**Reinforcement-Learning**](https://github.com/carla-simulator/reinforcement-learning): Code for running Conditional Reinforcement Learning models in CARLA
-* [**RoadRunner**](https://www.mathworks.com/products/roadrunner.html): MATLAB GUI based application to create road networks in the ASAM OpenDRIVE format
-* [**Map Editor**](https://github.com/carla-simulator/carla-map-editor): Standalone GUI application to enhance RoadRunner maps with traffic lights and traffic signs information
+Contributions are welcome — open an issue or a pull request.
 
+---
 
-**Like what you see? Star us on GitHub to support the project!**
+## Licenses
 
-Paper
------
-
-If you use CARLA, please cite our CoRL’17 paper.
-
-_CARLA: An Open Urban Driving Simulator_<br>Alexey Dosovitskiy, German Ros,
-Felipe Codevilla, Antonio Lopez, Vladlen Koltun; PMLR 78:1-16
-[[PDF](http://proceedings.mlr.press/v78/dosovitskiy17a/dosovitskiy17a.pdf)]
-[[talk](https://www.youtube.com/watch?v=xfyK03MEZ9Q&feature=youtu.be&t=2h44m30s)]
-
-
-```
-@inproceedings{Dosovitskiy17,
-  title = {{CARLA}: {An} Open Urban Driving Simulator},
-  author = {Alexey Dosovitskiy and German Ros and Felipe Codevilla and Antonio Lopez and Vladlen Koltun},
-  booktitle = {Proceedings of the 1st Annual Conference on Robot Learning},
-  pages = {1--16},
-  year = {2017}
-}
-```
-
-Building CARLA
---------------
-
-Clone this repository locally from GitHub:
-
-```sh
-git clone https://github.com/carla-simulator/carla.git .
-```
-
-Also, clone the [CARLA fork of the Unreal Engine](https://github.com/CarlaUnreal/UnrealEngine) into an appropriate location:
-
-```sh
-git clone --depth 1 -b carla https://github.com/CarlaUnreal/UnrealEngine.git .
-```
-
-Once you have cloned the repositories, follow the instructions for [building in Linux][buildlinuxlink] or [building in Windows][buildwindowslink].
-
-[buildlinuxlink]: https://carla.readthedocs.io/en/latest/build_linux/
-[buildwindowslink]: https://carla.readthedocs.io/en/latest/build_windows/
-
-Contributing
-------------
-
-Please take a look at our [Contribution guidelines][contriblink].
-
-[contriblink]: https://carla.readthedocs.io/en/latest/cont_contribution_guidelines/
-
-F.A.Q.
-------
-
-If you run into problems, check our
-[FAQ](https://carla.readthedocs.io/en/latest/build_faq/).
-
-Licenses
--------
-
-#### CARLA licenses
-
-CARLA specific code is distributed under MIT License.
-
-CARLA specific assets are distributed under CC-BY License.
-
-#### CARLA Dependency and Integration licenses
+This build inherits CARLA's licensing. CARLA specific code is distributed under **MIT License**;
+CARLA specific assets under **CC-BY License**. 
 
 The ad-rss-lib library compiled and linked by the [RSS Integration build variant](Docs/adv_rss.md) introduces [LGPL-2.1-only License](https://opensource.org/licenses/LGPL-2.1).
 
@@ -147,3 +269,13 @@ CARLA uses one dependency as part of the Chrono integration:
 CARLA uses the Autodesk FBX SDK for converting FBX to OBJ in the import process of maps. This step is optional, and the SDK is located [here](https://www.autodesk.com/developer-network/platform-technologies/fbx-sdk-2020-0)
 
 This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyright 2020 Autodesk, Inc. All rights, reserved. Such code is provided "as is" and Autodesk, Inc. disclaims any and all warranties, whether express or implied, including without limitation the implied warranties of merchantability, fitness for a particular purpose or non-infringement of third party rights. In no event shall Autodesk, Inc. be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of such code."
+
+---
+
+<div align="center">
+
+Built on the [CARLA simulator](https://github.com/carla-simulator/carla) · `ue4-dev`
+
+<sub><i>CARLA: An Open Urban Driving Simulator</i> — Dosovitskiy, Ros, Codevilla, Lopez, Koltun; PMLR 78:1-16</sub>
+
+</div>
