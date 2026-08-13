@@ -1,4 +1,4 @@
-ARG UBUNTU_DISTRO="20.04"
+ARG UBUNTU_DISTRO="22.04"
 
 FROM ubuntu:${UBUNTU_DISTRO}
 
@@ -26,7 +26,7 @@ USER root
 #
 # Python environment:
 # - python3, python3-dev, python3-pip: python runtime, development headers, and package manager installed at system level
-# - python-is-python3: symlink `python` to `python3` for compatibility (only Ubuntu20.04 and Ubuntu22.04)
+# - python-is-python3: symlink `python` to `python3` for compatibility (Ubuntu 20.04 and newer)
 #
 # Patchelf dependency:
 # - autoconf: required for building patchelf from source
@@ -35,18 +35,23 @@ USER root
 # - wget, curl, rsync, unzip, git, git-lfs: essential CLI tools used in CARLA's build scripts.
 #
 # Image libraries:
-# - libpng-dev, libtiff5-dev, libjpeg-dev: CARLA's Python API links to these system libraries
-RUN packages='build-essential ninja-build libvulkan1 python3 python3-dev python3-pip autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev' && \
+# - libpng-dev, libtiff-dev, libjpeg-dev: CARLA's Python API links to these system libraries.
+#   Use libtiff-dev rather than libtiff5-dev: the latter was dropped after Ubuntu
+#   22.04, so it breaks the build on newer distros, while libtiff-dev resolves to
+#   the same package on 22.04.
+#
+# Linker:
+# - lld: the linker bundled with UE4 cannot read the .relr.dyn sections present in
+#   glibc 2.36 and newer, so Util/BuildTools/Ubuntu24Compat.sh falls back to lld.
+#   It exits with an error if lld is missing.
+RUN packages='build-essential ninja-build lld libvulkan1 python3 python3-dev python3-pip autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff-dev libjpeg-dev' && \
   apt-get update && \
   apt-get install -y $packages && \
-  if [ "$UBUNTU_DISTRO" = "22.04" ]; then \
-    packages="python-is-python3" && \
-    apt-get install -y $packages; \
-  elif [ "$UBUNTU_DISTRO" = "20.04" ]; then \
-      packages="python-is-python3" && \
-    apt-get install -y $packages; \
-  elif [ "$UBUNTU_DISTRO" = "18.04" ]; then \
+  if [ "$UBUNTU_DISTRO" = "18.04" ]; then \
     packages="python" && \
+    apt-get install -y $packages; \
+  else \
+    packages="python-is-python3" && \
     apt-get install -y $packages; \
   fi && \
   rm -rf /var/lib/apt/lists/*

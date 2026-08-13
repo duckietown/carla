@@ -23,7 +23,7 @@ User and group options:
 
 Ubuntu distribution:
 
-    --ubuntu-distro DISTRO   Specify ubuntu distro (default: 20.04).
+    --ubuntu-distro DISTRO   Specify ubuntu distro (default: 22.04).
 
 Build options:
 
@@ -40,7 +40,7 @@ Other commands:
 END
 )
 
-UBUNTU_DISTRO=20.04
+UBUNTU_DISTRO=22.04
 
 BUILD_BASE=false
 BUILD_DEV=false
