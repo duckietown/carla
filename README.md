@@ -292,6 +292,12 @@ This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyrig
 
 ---
 
+## Authors of CARLA-Duckietown
+- [Paul Masan](https://github.com/Raining-Cloud/)
+- [Simon Rappenecker](https://github.com/DerSimi/)
+
+---
+
 <div align="center">
 
 Built on the [CARLA simulator](https://github.com/carla-simulator/carla) · `ue4-dev`
