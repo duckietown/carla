@@ -310,6 +310,8 @@ if ${DO_CARLA_RELEASE} ; then
   copy_if_changed "./PythonAPI/examples/nvidia/" "${DESTINATION}/PythonAPI/examples/nvidia"
   copy_if_changed "./PythonAPI/examples/ros2/" "${DESTINATION}/PythonAPI/examples/ros2"
 
+  copy_if_changed "./PythonAPI/duckietown/*.py" "${DESTINATION}/PythonAPI/duckietown/"
+
   copy_if_changed "./PythonAPI/util/*.py" "${DESTINATION}/PythonAPI/util/"
   copy_if_changed "./PythonAPI/util/opendrive/" "${DESTINATION}/PythonAPI/util/opendrive/"
   copy_if_changed "./PythonAPI/util/requirements.txt" "${DESTINATION}/PythonAPI/util/"
@@ -324,8 +326,12 @@ if ${DO_CARLA_RELEASE} ; then
     cp -r "./Unreal/CarlaUE4/Plugins/Carla/CarlaDependencies/lib" "${DESTINATION}/CarlaUE4/Plugins/Carla/CarlaDependencies"
   fi
 
-  copy_if_changed "./Unreal/CarlaUE4/Content/Carla/HDMaps/*.pcd" "${DESTINATION}/HDMaps/"
-  copy_if_changed "./Unreal/CarlaUE4/Content/Carla/HDMaps/Readme.md" "${DESTINATION}/HDMaps/README"
+  # HDMaps are LiDAR point clouds (.pcd) for the upstream CARLA towns -- 1.6 GB,
+  # of which Town01 alone is 165 MB. This build does not cook those towns (see
+  # MapsToCook in Unreal/CarlaUE4/Config/DefaultGame.ini), so the point clouds
+  # have nothing to pair with. Re-enable alongside the towns if you need them.
+  # copy_if_changed "./Unreal/CarlaUE4/Content/Carla/HDMaps/*.pcd" "${DESTINATION}/HDMaps/"
+  # copy_if_changed "./Unreal/CarlaUE4/Content/Carla/HDMaps/Readme.md" "${DESTINATION}/HDMaps/README"
 
   popd >/dev/null
 
