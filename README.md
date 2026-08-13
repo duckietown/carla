@@ -67,7 +67,7 @@ Data scarcity is the biggest bottleneck for end-to-end systems in Duckietown. Re
     <PART_RANGE>        the loop list, e.g. 00 01 02
     <PART_URL_BASE>     URL prefix the parts sit under, e.g.
                         https://github.com/duckietown/carla/releases/download/<RELEASE_TAG>
-    <WHEEL_PY310> / <WHEEL_PY312>  e.g. carla-0.9.16-cp310-cp310-linux_x86_64.whl
+    <WHEEL_PY310> / <WHEEL_PY312>  e.g. carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl
     <WHEEL_PY310_URL> / <WHEEL_PY312_URL>
     <UNPACKED_SIZE>     size once extracted, e.g. 13 GB
     <DEFAULT_MAP>       map the package boots into: duckietown_01
@@ -121,7 +121,27 @@ from PyPI will not work:
 
 ```sh
 python3 -m pip install --upgrade -r PythonAPI/carla/requirements.txt
-python3 -m pip install PythonAPI/carla/dist/carla-*.whl
+python3 -m pip install PythonAPI/carla/dist/carla_duckietown-*.whl
+```
+
+**Client only.** If the simulator runs on another machine and you just need the
+Python API, skip the package entirely and install the wheel for your Python
+version straight from the release:
+
+```sh
+python3 -m pip install <WHEEL_PY310_URL>
+```
+
+Keep the client and the server on the same release. A wheel from a different
+build will warn about a version mismatch on connect.
+
+The distribution is named `carla_duckietown` but it still provides the `carla`
+module, so it cannot coexist with upstream's `carla` package — pip will not spot
+the conflict for you. If you have ever installed `carla` from PyPI, remove it
+first:
+
+```sh
+python3 -m pip uninstall carla
 ```
 
 ### Running

@@ -21,7 +21,7 @@ From this folder, pick the wheel matching your Python version:
 
 ```sh
 python3 -m pip install --upgrade -r PythonAPI/carla/requirements.txt
-python3 -m pip install PythonAPI/carla/dist/carla-*.whl
+python3 -m pip install PythonAPI/carla/dist/carla_duckietown-*.whl
 ```
 
 If your system Python is externally managed (Ubuntu 24.04 and newer refuse a
@@ -30,7 +30,7 @@ bare `pip install`), install into a virtual environment instead:
 ```sh
 python3 -m venv ~/carla-venv
 source ~/carla-venv/bin/activate
-python3 -m pip install PythonAPI/carla/dist/carla-*.whl
+python3 -m pip install PythonAPI/carla/dist/carla_duckietown-*.whl
 ```
 
 

@@ -264,10 +264,10 @@ The CARLA Python API wheel will be generated in `${CARLA_UE4_ROOT}/PythonAPI/car
 
 ```sh
 # CARLA 0.9.16, Python 3.10
-python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp310-cp310-linux_x86_64.whl
+python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla_duckietown-1.0-cp310-cp310-linux_x86_64.whl
 
 # Or let the shell pick whichever wheel was just built
-python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-*.whl
+python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla_duckietown-*.whl
 ```
 
 !!! Warning

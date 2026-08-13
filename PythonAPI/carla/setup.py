@@ -195,8 +195,12 @@ class CleanADStubFiles(install_lib):
         return
 
 setup(
-    name='carla',
-    version='0.9.16',
+    # Distribution name only. The import name stays `carla` (see packages
+    # below), so client scripts are unchanged. Because this ships its own
+    # `carla` module, having upstream's `carla` distribution installed at the
+    # same time is not supported: uninstall it first.
+    name='carla_duckietown',
+    version='1.0',
     package_dir={'': 'source'},
     # Avoid "Package would be ignored" warning for non-rss build if using ['carla'] here
     packages=['carla', 'carla.ad', 'carla.ad.rss', 'carla.ad.map'] if is_rss_variant_enabled() else ['carla'],
@@ -208,7 +212,7 @@ setup(
     description='Python API for communicating with the CARLA server.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/carla-simulator/carla',
+    url='https://github.com/duckietown/carla',
     author='The CARLA team',
     author_email='carla.simulator@gmail.com',
     include_package_data=True,
