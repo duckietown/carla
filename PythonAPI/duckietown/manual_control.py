@@ -143,11 +143,15 @@ DUCKIETOWN_MAPS = ['duckietown_%02d' % i for i in range(1, 7)]
 # -- Duckietown segmentation palette -------------------------------------------
 # ==============================================================================
 
+# Colors for the Duckietown labels, kept identical to the server-side
+# CityScapes palette in LibCarla/source/carla/image/CityScapesPalette.h, so
+# that this view and carla.ColorConverter.CityScapesPalette agree. Every other
+# label stays black, which isolates the Duckietown geometry.
 DUCKIETOWN_PALETTE = np.zeros((256, 3), dtype=np.uint8)
-DUCKIETOWN_PALETTE[29] = (255, 255, 255)  # DuckietownCenterLane (white)
-DUCKIETOWN_PALETTE[30] = (  0,   0, 255)  # DuckietownSideLane   (blue)
-DUCKIETOWN_PALETTE[31] = (  0, 255,   0)  # DuckietownAsphalt    (green)
-DUCKIETOWN_PALETTE[32] = (255,   0,   0)  # DuckietownStopLane   (red)
+DUCKIETOWN_PALETTE[29] = (255, 255,   0)  # DuckietownCenterLane
+DUCKIETOWN_PALETTE[30] = (255, 255, 255)  # DuckietownSideLane
+DUCKIETOWN_PALETTE[31] = ( 90,  90,  90)  # DuckietownAsphalt
+DUCKIETOWN_PALETTE[32] = (200,  20,  20)  # DuckietownStopLane
 DUCKIETOWN_PALETTE[33] = (255, 140,   0)  # DuckietownSign
 DUCKIETOWN_PALETTE[34] = ( 30,  60, 220)  # DuckietownBot
 DUCKIETOWN_PALETTE[35] = (240, 180,   0)  # DuckietownDuck
