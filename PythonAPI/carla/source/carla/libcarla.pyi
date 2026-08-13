@@ -866,6 +866,20 @@ class CityObjectLabel(int, _CarlaEnum):
     Bus = 16
     Rider = 13
     Train = 17
+    DuckietownCenterLane = 29
+    """Duckietown lane divider (the dashed centre line)."""
+    DuckietownSideLane = 30
+    """Duckietown lane boundary (the solid outer line)."""
+    DuckietownAsphalt = 31
+    """Duckietown drivable road surface."""
+    DuckietownStopLane = 32
+    """Duckietown stop line at an intersection."""
+    DuckietownSign = 33
+    """Duckietown traffic sign."""
+    DuckietownBot = 34
+    """Duckiebot."""
+    DuckietownDuck = 35
+    """Rubber duckie prop."""
     Any = 255
 
 class Client:
@@ -4897,54 +4911,6 @@ class WeatherParameters:
     def __str__(self) -> str: ...
     # endregion
 
-class HDRIParameters:
-    """Defines the HDRI (image-based) lighting state of a map, applied through `carla.World.set_hdri`."""
-
-    # region Instance Variables
-    @property
-    def enabled(self) -> bool:
-        """Whether HDRI lighting is active."""
-
-    @property
-    def asset(self) -> str:
-        """Cubemap asset name, resolved against the default HDRI directory. Empty leaves the current cubemap unchanged."""
-
-    @property
-    def intensity(self) -> float:
-        """Lighting intensity of the HDRIBackdrop."""
-
-    @property
-    def size(self) -> float:
-        """Size (radius) of the HDRIBackdrop dome."""
-
-    @property
-    def projection_center(self) -> Vector3D:
-        """Projection center of the HDRIBackdrop."""
-
-    @property
-    def location(self) -> Vector3D:
-        """World location of the HDRIBackdrop actor."""
-    # endregion
-
-    # region Methods
-    def __init__(
-        self,
-        enabled: bool = False,
-        asset: str = '',
-        intensity: float = 1.0,
-        size: float = 1000.0,
-        projection_center: Vector3D = Vector3D(),
-        location: Vector3D = Vector3D(),
-    ) -> None:
-        """Initializes an object defining an HDRI lighting state."""
-    # endregion
-
-    # region Dunder Methods
-    def __eq__(self, other: HDRIParameters, /) -> bool: ...
-    def __ne__(self, other: HDRIParameters, /) -> bool: ...
-    def __str__(self) -> str: ...
-    # endregion
-
 class WheelPhysicsControl:
     """Class that defines specific physical parameters for wheel objects that will be part of a `carla.VehiclePhysicsControl` to simulate vehicle it as a material object."""
 
@@ -5341,12 +5307,12 @@ class World:
         + Setter: `carla.World.set_weather`
         """
 
-    def get_hdri(self) -> HDRIParameters:
-        """Retrieves the HDRI lighting state currently active in the simulation.
+    def get_hdri_presets(self) -> list[str]:
+        """Returns the names of the HDRI (image-based) lighting presets defined on the current map's HDRI controller.
 
-        + Setter: `carla.World.set_hdri`
+        + Setter: `carla.World.set_hdri_preset`
 
-        + Note: Only available on maps that support HDRI. Raises `RuntimeError` otherwise.
+        + Note: Only available on maps that ship an HDRI controller. Raises `RuntimeError` otherwise.
         """
     # endregion
 
@@ -5384,15 +5350,15 @@ class World:
             `weather (WeatherParameters)`: New conditions to be applied.
         """
 
-    def set_hdri(self, hdri: HDRIParameters):
-        """Changes the HDRI (image-based) lighting state of the simulation. Enabling HDRI hides the regular sky so that only the map's HDRIBackdrop lights the scene; calling `carla.World.set_weather` afterwards disables HDRI again.
+    def set_hdri_preset(self, preset: str | None):
+        """Applies one of the HDRI (image-based) lighting presets defined on the current map. Only the preset name travels over the wire; the cubemap, intensity, dome size, projection center and optional sun intensity/temperature overrides all come from the map. Enabling a preset hides the weather actor so that only the HDRIBackdrop lights the scene; calling `carla.World.set_weather` afterwards disables HDRI again.
 
-        + Getter: `carla.World.get_hdri`
+        + Getter: `carla.World.get_hdri_presets`
 
-        + Note: Only available on maps that support HDRI. Raises `RuntimeError` otherwise, or if the cubemap asset cannot be found.
+        + Note: Raises `RuntimeError` if the map has no HDRI controller, or if no preset with that name exists on it.
 
         Args:
-            `hdri (HDRIParameters)`: New HDRI state to be applied.
+            `preset (str | None)`: Name of the preset to apply, as listed by `get_hdri_presets()`. Pass `None` or an empty string to disable HDRI and restore the regular sky.
         """
     # endregion
 

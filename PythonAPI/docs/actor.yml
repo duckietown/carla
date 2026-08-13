@@ -242,6 +242,13 @@
         type: bool
       doc: >
         Enables or disables gravity for the actor. __Default__ is True.
+    # --------------------------------------
+    - def_name: set_hidden_in_game
+      params:
+      - param_name: hidden
+        type: bool
+      doc: >
+        Shows or hides all of the actor's meshes. This affects rendering only: collision, physics and the actor's tick keep running, so a hidden vehicle still drives and still collides. Actors attached to this one, such as sensors, keep their own visibility and keep rendering — an attached camera simply stops seeing the actor it is mounted on, which makes this useful for capturing an unobstructed ego view. __Default__ is True.
 
 
   - class_name: ActorState

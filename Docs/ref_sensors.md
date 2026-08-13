@@ -856,7 +856,20 @@ The following tags are currently available (Note, tags changed from version 0.9.
 | `26`           | Bridge         | `(150, 100, 100)`            | Only the structure of the bridge. Fences, people, vehicles, an other elements on top of it are labeled separately.          |
 | `27`           | RailTrack      | `(230, 150, 140)`            | All kind of rail tracks that are non-drivable by cars. <br> E.g. subway and train rail tracks.    |
 | `28`           | GuardRail      | `(180, 165, 180)`            | All types of guard rails/crash barriers. |
+| `29`           | DuckietownCenterLane | `(255, 255, 0)`      | Duckietown lane divider: the dashed yellow centre line separating the two directions of travel. |
+| `30`           | DuckietownSideLane | `(255, 255, 255)`      | Duckietown lane boundary: the solid white line marking the outer edge of a lane. |
+| `31`           | DuckietownAsphalt | `(90, 90, 90)`          | Duckietown drivable road surface, excluding the lane markings on top of it.  |
+| `32`           | DuckietownStopLane | `(200, 20, 20)`        | Duckietown stop line painted across a lane at an intersection. |
+| `33`           | DuckietownSign | `(255, 140, 0)`             | Duckietown traffic signs, including their posts.   |
+| `34`           | DuckietownBot  | `(30, 60, 220)`   | Duckiebots.       |
+| `35`           | DuckietownDuck | `(240, 180, 0)`  | Rubber duckie props.        |
 <br>
+
+!!! Note
+    Tags `29` to `35` are specific to this Duckietown build of CARLA. An asset is given one of these tags by placing it under a folder named after the tag inside a `Static` content folder, e.g. `Content/Duckietown/Static/DuckietownDuck/`.
+
+!!! Note
+    The `Camera Duckietown Segmentation` view in `PythonAPI/duckietown/manual_control.py` uses these same colors, but paints every other label black so that only the Duckietown geometry is visible. Its `DUCKIETOWN_PALETTE` table is a copy of the values above — keep the two in sync when adding a tag.
 
 !!! Note
     Read [this](tuto_D_create_semantic_tags.md) tutorial to create new semantic tags.

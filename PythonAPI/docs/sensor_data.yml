@@ -90,6 +90,34 @@
     - var_name: Dynamic
     - var_name: Water
     - var_name: Terrain
+    - var_name: DuckietownCenterLane
+      doc: >
+        Semantic tag 29. Duckietown lane divider (the dashed centre line).
+    # --------------------------------------
+    - var_name: DuckietownSideLane
+      doc: >
+        Semantic tag 30. Duckietown lane boundary (the solid outer line).
+    # --------------------------------------
+    - var_name: DuckietownAsphalt
+      doc: >
+        Semantic tag 31. Duckietown drivable road surface.
+    # --------------------------------------
+    - var_name: DuckietownStopLane
+      doc: >
+        Semantic tag 32. Duckietown stop line at an intersection.
+    # --------------------------------------
+    - var_name: DuckietownSign
+      doc: >
+        Semantic tag 33. Duckietown traffic sign.
+    # --------------------------------------
+    - var_name: DuckietownBot
+      doc: >
+        Semantic tag 34. Duckiebot.
+    # --------------------------------------
+    - var_name: DuckietownDuck
+      doc: >
+        Semantic tag 35. Rubber duckie prop.
+    # --------------------------------------
     - var_name: Any
 
   - class_name: Image

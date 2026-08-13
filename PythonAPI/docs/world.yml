@@ -746,19 +746,19 @@
       doc: >
         Changes the weather parameters ruling the simulation to another ones defined in an object.
     # --------------------------------------
-    - def_name: get_hdri
-      return: carla.HDRIParameters
+    - def_name: get_hdri_presets
+      return: list(str)
       doc: >
-        Retrieves the HDRI lighting state currently active in the simulation. Only available on maps that support HDRI; raises a RuntimeError otherwise.
+        Returns the names of the HDRI (image-based) lighting presets defined on the current map's HDRI controller. Only available on maps that ship an HDRI controller; raises a RuntimeError otherwise.
     # --------------------------------------
-    - def_name: set_hdri
+    - def_name: set_hdri_preset
       params:
-      - param_name: hdri
-        type: carla.HDRIParameters
+      - param_name: preset
+        type: str
         doc: >
-          New HDRI state to be applied.
+          Name of the preset to apply, as listed by get_hdri_presets(). Pass <b>None</b> or an empty string to disable HDRI and restore the regular sky.
       doc: >
-        Changes the HDRI (image-based) lighting state of the simulation. Enabling HDRI hides the regular sky so that only the map's HDRIBackdrop lights the scene; calling set_weather afterwards disables HDRI again. Only available on maps that support HDRI; raises a RuntimeError otherwise, or if the cubemap asset cannot be found.
+        Applies one of the HDRI lighting presets defined on the current map. Only the preset name travels over the wire; the cubemap, intensity, dome size, projection center and optional sun intensity/temperature overrides all come from the map. Enabling a preset hides the weather actor so that only the HDRIBackdrop lights the scene; calling set_weather afterwards disables HDRI again. Raises a RuntimeError if the map has no HDRI controller, or if no preset with that name exists on it.
     # --------------------------------------
     - def_name: cast_ray
       return: list(carla.LabelledPoint)

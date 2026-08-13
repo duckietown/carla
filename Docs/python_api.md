@@ -137,6 +137,10 @@ Returns the world this actor belongs to.
 Enables or disables gravity for the actor. __Default__ is True.  
     - **Parameters:**
         - `enabled` (_bool_)  
+- <a name="carla.Actor.set_hidden_in_game"></a>**<font color="#7fb800">set_hidden_in_game</font>**(<font color="#00a6ed">**self**</font>, <font color="#00a6ed">**hidden**</font>)  
+Shows or hides all of the actor's meshes. This affects rendering only: collision, physics and the actor's tick keep running, so a hidden vehicle still drives and still collides. Actors attached to this one, such as sensors, keep their own visibility and keep rendering — an attached camera simply stops seeing the actor it is mounted on, which makes this useful for capturing an unobstructed ego view. __Default__ is True.  
+    - **Parameters:**
+        - `hidden` (_bool_)  
 - <a name="carla.Actor.set_location"></a>**<font color="#7fb800">set_location</font>**(<font color="#00a6ed">**self**</font>, <font color="#00a6ed">**location**</font>)  
 Teleports the actor to a given location.  
     - **Parameters:**
@@ -506,6 +510,20 @@ Enum declaration that contains the different tags available to filter the boundi
 - <a name="carla.CityObjectLabel.Dynamic"></a>**<font color="#f8805a">Dynamic</font>**  
 - <a name="carla.CityObjectLabel.Water"></a>**<font color="#f8805a">Water</font>**  
 - <a name="carla.CityObjectLabel.Terrain"></a>**<font color="#f8805a">Terrain</font>**  
+- <a name="carla.CityObjectLabel.DuckietownCenterLane"></a>**<font color="#f8805a">DuckietownCenterLane</font>**  
+Semantic tag 29. Duckietown lane divider (the dashed centre line).  
+- <a name="carla.CityObjectLabel.DuckietownSideLane"></a>**<font color="#f8805a">DuckietownSideLane</font>**  
+Semantic tag 30. Duckietown lane boundary (the solid outer line).  
+- <a name="carla.CityObjectLabel.DuckietownAsphalt"></a>**<font color="#f8805a">DuckietownAsphalt</font>**  
+Semantic tag 31. Duckietown drivable road surface.  
+- <a name="carla.CityObjectLabel.DuckietownStopLane"></a>**<font color="#f8805a">DuckietownStopLane</font>**  
+Semantic tag 32. Duckietown stop line at an intersection.  
+- <a name="carla.CityObjectLabel.DuckietownSign"></a>**<font color="#f8805a">DuckietownSign</font>**  
+Semantic tag 33. Duckietown traffic sign.  
+- <a name="carla.CityObjectLabel.DuckietownBot"></a>**<font color="#f8805a">DuckietownBot</font>**  
+Semantic tag 34. Duckiebot.  
+- <a name="carla.CityObjectLabel.DuckietownDuck"></a>**<font color="#f8805a">DuckietownDuck</font>**  
+Semantic tag 35. Rubber duckie prop.  
 - <a name="carla.CityObjectLabel.Any"></a>**<font color="#f8805a">Any</font>**  
 
 ---
@@ -3987,6 +4005,9 @@ Returns a list of EnvironmentObject with the requested semantic tag.  The method
     - **Parameters:**
         - `object_type` (_[carla.CityObjectLabel](#carla.CityObjectLabel)_) - Semantic tag of the EnvironmentObjects that are returned.  
     - **Return:** _array([carla.EnvironmentObject](#carla.EnvironmentObject))_  
+- <a name="carla.World.get_hdri_presets"></a>**<font color="#7fb800">get_hdri_presets</font>**(<font color="#00a6ed">**self**</font>)  
+Returns the names of the HDRI (image-based) lighting presets defined on the current map's HDRI controller. Only available on maps that ship an HDRI controller; raises a RuntimeError otherwise.  
+    - **Return:** _list(str)_  
 - <a name="carla.World.get_level_bbs"></a>**<font color="#7fb800">get_level_bbs</font>**(<font color="#00a6ed">**self**</font>, <font color="#00a6ed">**actor_type**=Any</font>)  
 Returns an array of bounding boxes with location and rotation in world space. The method returns all the bounding boxes in the level by default, but the query can be filtered by semantic tags with the argument `actor_type`.  
     - **Parameters:**
@@ -4054,6 +4075,10 @@ Retrieves an object containing weather parameters currently active in the simula
 Sets CARLA's behavior whether the semantic + instance segmentation and depth annotations traverse translucent materials or not. To find the closest obstacle, this should be set to false (default). If you are interested in annotations that detect objects behind windows, this should be enabled.  
     - **Parameters:**
         - `enable` (_bool_) - Enables or disables the traversal of translucent materials in semantic, instance and depth annotations. __Default is `False`__.  
+- <a name="carla.World.set_hdri_preset"></a>**<font color="#7fb800">set_hdri_preset</font>**(<font color="#00a6ed">**self**</font>, <font color="#00a6ed">**preset**</font>)  
+Applies one of the HDRI lighting presets defined on the current map. Only the preset name travels over the wire; the cubemap, intensity, dome size, projection center and optional sun intensity/temperature overrides all come from the map. Enabling a preset hides the weather actor so that only the HDRIBackdrop lights the scene; calling set_weather afterwards disables HDRI again. Raises a RuntimeError if the map has no HDRI controller, or if no preset with that name exists on it.  
+    - **Parameters:**
+        - `preset` (_str_) - Name of the preset to apply, as listed by get_hdri_presets(). Pass <b>None</b> or an empty string to disable HDRI and restore the regular sky.  
 - <a name="carla.World.set_pedestrians_cross_factor"></a>**<font color="#7fb800">set_pedestrians_cross_factor</font>**(<font color="#00a6ed">**self**</font>, <font color="#00a6ed">**percentage**</font>)  
     - **Parameters:**
         - `percentage` (_float_) - Sets the percentage of pedestrians that can walk on the road or cross at any point on the road. Value should be between `0.0` and `1.0`. For example, a value of `0.1` would allow 10% of pedestrians to walk on the road. __Default is `0.0`__.  
