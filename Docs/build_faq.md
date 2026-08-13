@@ -199,7 +199,7 @@ CARLA forum</a>
 
 ###### "CarlaUE4.exe" does not appear when downloading from GitHub.
 
-> There is no `CarlaUE4.exe` executable in the source version of CARLA. Follow the [build instructions](build_windows.md) to build CARLA from source. To directly get the `CarlaUE4.exe`, follow the [quick start instructions](start_quickstart.md).  
+> There is no `CarlaUE4.exe` executable in the source version of CARLA. CARLA Duckietown is built on Linux only — follow the [Linux build instructions](build_linux.md), which produce `CarlaUE4.sh`. If you need a Windows build, see the [upstream Windows instructions](https://carla.readthedocs.io/en/latest/build_windows/).  
 
 <!-- ======================================================================= -->
 

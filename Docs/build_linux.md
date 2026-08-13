@@ -1,17 +1,23 @@
 # Linux build
 
-This guide details how to build CARLA from source on Linux. The build process is long (4 hours or more) and involves several kinds of software. It is highly recommended to read through the guide fully before starting. 
+This guide details how to build CARLA Duckietown from source on Linux. It follows the upstream CARLA build closely; the parts that differ are the repository you clone, the content download, and the scripts you run once the simulator is up.
 
-If you come across errors or difficulties then have a look at the **[F.A.Q.](build_faq.md)** page which offers solutions for the most common complications. Alternatively, use the [CARLA forum](https://github.com/carla-simulator/carla/discussions) to post any queries you may have.
+The build process is long — 3 to 4 hours — and most of that time is spent compiling Unreal Engine. It is highly recommended to read through the guide fully before starting.
+
+!!! note
+    If you do not need the Unreal Editor or to modify the C++ code, you do not need to build at all. The [prebuilt release](https://github.com/duckietown/carla/releases) ships the simulator with all six Duckietown maps and a matching Python API wheel.
+
+If you come across errors or difficulties then have a look at the **[F.A.Q.](build_faq.md)** page, which offers solutions for the most common complications. The [upstream CARLA discussions](https://github.com/carla-simulator/carla/discussions) are still the best place to ask about problems that are not specific to Duckietown.
 
 - [__Prerequisites__](#part-one-prerequisites)
     - [System requirements](#system-requirements)
     - [Software requirements](#software-requirements)
 - [__Building Unreal Engine__](#building-unreal-engine)
-- [__Building CARLA__](#building-carla)
-    - [Clone the CARLA repository](#clone-the-carla-repository)
-    - [Download the CARLA content](#download-the-carla-content)
-    - [Build CARLA with Make](#build-carla-with-make)
+- [__Building CARLA Duckietown__](#building-carla-duckietown)
+    - [Clone the repository](#clone-the-repository)
+    - [Set up the CARLA_UE4_ROOT environment variable](#set-up-the-carla_ue4_root-environment-variable)
+    - [Download the content](#download-the-content)
+    - [Build with Make](#build-with-make)
         - [Compile the Python API client](#1-compile-the-python-api-client)
         - [Compile the server](#2-compile-the-server)
         - [Start the simulation](#3-start-the-simulation)
@@ -23,34 +29,50 @@ If you come across errors or difficulties then have a look at the **[F.A.Q.](bui
 
 ### System requirements
 
-* __Ubuntu 20.04 or 22.04__: The current dev branch of CARLA is tested regularly on Ubuntu 20.04 and Ubuntu 22.04. It may be possible to build CARLA in earlier Ubuntu versions but we recommend a minimum of version 20.04. CARLA has not been tested internally in Ubuntu 24.04, therefore we recommend to stay with a maximum of Ubuntu 22.04.
-* __130 GB disk space__: CARLA will take around 31 GB and Unreal Engine will take around 91 GB so have about 130 GB free to account for both of these plus additional minor software installations. 
-* __A high-performance GPU__: CARLA places a high demand on the GPU, therefore it is recommended to use a minimum of an NVIDIA RTX 2000 series (e.g. 2070) or better with at least 6 Gb of VRAM, preferably 8 Gb or more.
-* __A high-performance CPU__: CARLA also benefits from a CPU with solid performance. We recommend a minimum of an Intel Core i7 with 4 or more cores (or equivalent). 
-* __Two TCP ports and good internet connection__: 2000 and 2001 by default. Make sure that these ports are not blocked by firewalls or any other applications. 
-* __Python 3.8 or higher__ is recommended.
+* __Ubuntu 22.04 or 26.04__: the supported versions. 22.04 is the recommended minimum — earlier releases are no longer supported, in part because a client wheel built here requires glibc 2.34 or newer. Pick the matching package list in [Software requirements](#software-requirements) below; the two differ.
+* __130 GB of disk space__: roughly 91 GB for Unreal Engine and 31 GB for CARLA and its content. Note that `Update.sh` *backs up* any content folder it replaces instead of deleting it, so repeated content updates will consume more space until you remove the timestamped backups under `Unreal/CarlaUE4/Content`.
+* __A dedicated GPU__: CARLA places a high demand on the GPU. An NVIDIA RTX 2070 or better with at least 6 GB of VRAM is the minimum; 8 GB or more is recommended, and working in the Unreal Editor benefits from more still.
+* __A high-performance CPU__: an Intel Core i7 with 4 or more cores, or equivalent.
+* __At least 32 GB of RAM__ to build and run the simulator comfortably.
+* __Two TCP ports and a good internet connection__: 2000 and 2001 by default. Make sure they are not blocked by a firewall or another application.
+* __Python 3.10 or higher__. Note that the client is a compiled extension, so a wheel only works with the exact Python version it was built against; `make PythonAPI` targets whichever `python3` is on your `PATH`.
 
 ### Software requirements
 
-CARLA requires numerous software tools for compilation. Some are built during the CARLA build process itself, such as *Boost.Python*. Others are binaries that should be installed before starting the build (*cmake*, different versions of *Python*, etc.). 
+CARLA requires numerous software tools for compilation. Some are built during the CARLA build process itself, such as *Boost.Python*. Others are binaries that must be installed before starting the build.
 
 #### Ubuntu 22.04
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential g++-12 cmake ninja-build libvulkan1 python3 python3-dev python3-pip python3-venv autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev
+sudo apt-get install build-essential g++-12 cmake ninja-build libvulkan1 python3 python3-dev python3-pip python3-venv python3-requests autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev aria2
 ```
 
-#### Ubuntu 20.04
+#### Ubuntu 26.04
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential g++-9 cmake ninja-build libvulkan1 python3 python3-dev python3-pip python3-venv autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff5-dev libjpeg-dev
+sudo apt-get install build-essential g++-12 cmake ninja-build lld libvulkan1 python3 python3-dev python3-pip python3-venv python3-requests autoconf wget curl rsync unzip git git-lfs libpng-dev libtiff-dev libjpeg-dev aria2
 ```
+
+!!! important
+    Three things differ on newer releases, all handled above or automatically:
+
+    * __`libtiff-dev` instead of `libtiff5-dev`__. The `5` variant was dropped after 22.04, so the older command fails outright. `libtiff-dev` resolves to the same package on 22.04, so it is safe everywhere.
+    * __`lld` is required.__ The linker bundled with Unreal Engine cannot read the `.relr.dyn` sections present in glibc 2.36 and newer. `Ubuntu24Compat.sh` detects this and wraps the compiler to use `ld.lld` instead, but it exits with an error if `lld` is not installed.
+    * __The system Python is [externally managed](https://packaging.python.org/en/latest/specifications/externally-managed-environments/)__ (PEP 668), so a bare `pip install` into it is refused. This does not break the build: `Ubuntu24Compat.sh` detects it, the wheel is still built into `PythonAPI/carla/dist`, and the build prints the commands to install it manually. Using a [virtual environment](#1-compile-the-python-api-client) avoids the issue entirely.
+
+!!! note
+    `g++-12` is named explicitly because that is the version the build expects, but the host compiler does less work than it appears to: `Setup.sh` switches to the clang toolchain bundled with Unreal Engine for the bulk of the compilation. If `g++-12` is unavailable from the default repositories on your release, the [Toolchain PPA](https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test) provides it.
+
+!!! important
+    `python3-requests` is required by [`Update.sh`](#download-the-content) — the Duckietown content is fetched from Google Drive by `Util/download_from_gdrive.py`, which imports `requests`. Without it the content download fails with a `ModuleNotFoundError` before anything is compiled.
+
+`aria2` is optional but recommended: `Update.sh` will use `aria2c` to fetch the CARLA content archive over multiple connections, falling back to `wget` when it is missing. The Duckietown archive is always a single-stream download.
 
 ## Building Unreal Engine
 
-This version of CARLA uses a modified fork of Unreal Engine 4.26. This fork contains patches specific to CARLA.
+This version of CARLA uses a modified fork of Unreal Engine 4.26. This fork contains patches specific to CARLA, so a build from the Epic Games Launcher will not work.
 
-Be aware that to download this fork of Unreal Engine, __you need to have a GitHub account linked to the Epic Games organization__. If you don't have this link already set up, please follow [this guide](https://www.unrealengine.com/en-US/ue4-on-github) before going any further.
+Be aware that to download this fork of Unreal Engine, __you need to have a GitHub account linked to the Epic Games organization__. If you don't have this link already set up, please follow [this guide](https://www.unrealengine.com/en-US/ue4-on-github) before going any further — without it the clone below fails with a 404.
 
 __1.__ **Clone the content for CARLA's fork of Unreal Engine 4.26 to your local computer**:
 
@@ -69,7 +91,7 @@ __2.__ **Navigate into the directory where you cloned the Unreal Engine reposito
 cd ~/UnrealEngine_4.26
 ```
 
-__3.__ **Set up and build with `make`. This may take an hour or two depending on your system**:
+__3.__ **Set up and build with `make`. `Setup.sh` pulls around 10 GB of binary dependencies, and the build itself may take an hour or two depending on your system**:
 ```sh
 ./Setup.sh && ./GenerateProjectFiles.sh && make
 ```
@@ -81,7 +103,7 @@ __4.__ **Open the Editor to check that Unreal Engine has been installed properly
 cd ~/UnrealEngine_4.26/Engine/Binaries/Linux && ./UE4Editor
 ```
 
-__5.__ S**et the Unreal Engine environment variable**:
+__5.__ **Set the Unreal Engine environment variable**:
 
 For CARLA to locate the correct installation of Unreal Engine, an environment variable is needed.
 
@@ -91,84 +113,99 @@ To set the variable for this session only:
 export UE4_ROOT=~/UnrealEngine_4.26
 ```
 
-You may want to set the environment variable in your `.bashrc` or `.profile`, so that it is always set. Open `.bashrc` or `.profile` with `gedit` and add the line above near the end of the file and save:
+You will want to set the environment variable in your `.bashrc` or `.profile` (or the equivalent for your shell) so that it is always set:
 
 ```sh
-cd ~
-gedit .bashrc # or .profile
-#OR, from the command line:
-#echo "export UE4_ROOT=~/UnrealEngine_4.26" >> ~/.bashrc
+echo 'export UE4_ROOT=~/UnrealEngine_4.26' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ---
 
-## Building CARLA 
+## Building CARLA Duckietown
 
-!!! Note
-    Downloading aria2 with `sudo apt-get install aria2` will speed up the following commands.
+### Clone the repository
 
-### Clone the CARLA repository
-
-Clone the `ue4-dev` branch of the CARLA repository with the following command:
+Clone the `ue4-dev` branch of the Duckietown CARLA repository:
 
 ```sh
-git clone -b ue4-dev https://github.com/carla-simulator/carla
+git clone -b ue4-dev git@github.com:duckietown/carla.git CarlaSource
+cd CarlaSource
 ```
 
-You can download the repository as a ZIP archive directly from the [CARLA GitHub repository page](https://github.com/carla-simulator/carla) if you prefer not to use Git.
+If you have not set up an SSH key with GitHub, use the HTTPS remote instead:
 
-!!! Note
-    The `master` branch contains the latest official release of CARLA, while the `ue4-dev` branch has all the latest development updates. Previous CARLA versions are tagged with the version name. Always remember to check the current branch in git with the command `git branch`. 
+```sh
+git clone -b ue4-dev https://github.com/duckietown/carla.git CarlaSource
+```
+
+!!! note
+    `ue4-dev` is the working branch for this Unreal Engine 4.26 build and is the branch you want. Always check which branch you are on with `git branch`. The `ue5-dev` branch targets Unreal Engine 5 and is built differently.
 
 ### Set up the CARLA_UE4_ROOT environment variable
 
-For the following build commands, it is convenient to create a `CARLA_UE4_ROOT` environment variable to locate the root folder of the CARLA repository where you have cloned the code. Run the following command in your shell (you may also want to add it to `.bashrc` or `.profile` for future sessions):
+For the following build commands it is convenient to create a `CARLA_UE4_ROOT` environment variable pointing at the root of the repository you just cloned. Run the following in your shell (you may also want to add it to `.bashrc` or `.profile` for future sessions):
 
 ```sh
-export CARLA_UE4_ROOT=/path/to/carla/folder
+export CARLA_UE4_ROOT=/path/to/CarlaSource
 ```
 
-If you choose not to use an environment variable, replace `${CARLA_UE4_ROOT}` in the following commands with the appropriate directory locationl.
+If you choose not to use an environment variable, replace `${CARLA_UE4_ROOT}` in the following commands with the appropriate directory. Every `make` command must be run from that directory.
 
-### Download the CARLA content
+### Download the content
 
-CARLA comes with a large repository of 3D assets including maps, vehicles and pedestrians. To work on a build-from source version of CARLA you need to download a version of the content corresponding to your current update of the CARLA code.
+The repository holds code only. Maps, meshes and textures are distributed as two separate archives:
 
-If you are working on the latest updates of the `ue4-dev` branch you will need to download the latest version of the content. There are two ways to achieve this:
+* __CARLA's own content__, pinned in [`Util/ContentVersions.txt`](https://github.com/duckietown/carla/blob/ue4-dev/Util/ContentVersions.txt), extracted into `${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla`.
+* __The Duckietown package__ — the six Duckietown maps, the Duckiebot, the signs, the duckie props and the HDRI presets — pinned in [`Util/DuckietownContentVersions.txt`](https://github.com/duckietown/carla/blob/ue4-dev/Util/DuckietownContentVersions.txt), extracted into `${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Duckietown`.
 
-__1. Using the content update script__: This script downloads the latest package of the CARLA content as a `tar.gz` archive and decompresses the archive into the `${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla` directory:
+One script fetches and extracts both:
 
 ```sh
 ./Update.sh
 ```
 
-__2. Using Git__: Using Git, you will establish a git repository for the content in the `${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla` directory. **This is the preferred method if you intend to commit content updates to CARLA (or your own fork of CARLA)**. From the root directory of the CARLA code repository, run the following command (if you have your own fork of the CARLA content, change the target remote repository accordingly):
+Each half is tracked by a `.version` file inside its content folder, so re-running `Update.sh` after a `git pull` only downloads what actually changed. If a folder does need replacing, the existing one is renamed with a timestamp suffix rather than deleted — remove those backups yourself once you are satisfied with the new content.
+
+Two flags let you fetch just one half:
+
+| Flag | Effect |
+| ---- | ------ |
+| `-s`, `--skip-download` | Skip the CARLA content, download only the Duckietown package. |
+| `-d`, `--skip-duckietown` | Skip the Duckietown package, download only the CARLA content. |
+
+!!! note
+    Passing `-s` prints the direct link to the CARLA content archive so you can download and extract it manually into `Unreal/CarlaUE4/Content/Carla`.
+
+#### Using Git for the CARLA content
+
+If you intend to commit changes to the *upstream* CARLA content, you can keep that half as a git repository instead. `Update.sh` detects a `.git` directory in the content folder and leaves it alone:
 
 ```sh
 git clone -b master https://bitbucket.org/carla-simulator/carla-content ${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla
 ```
 
-#### Downloading the assets in an archive for a specific CARLA version
+The Duckietown package is not distributed as a git repository; use `Update.sh` for it.
 
-You may want to download the assets for a specific CARLA version for some purposes:
+#### Downloading the content for a specific version
 
-1. From the root CARLA directory, navigate to `${CARLA_UE4_ROOT}/Util/ContentVersions.txt`. This document contains the links to the assets for all CARLA releases. 
-2. Extract the assets in `${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla`. If the path doesn't exist, create it.  
-3. Extract the file with a command similar to the following:
+To pin the content to an older version, take the relevant ID from `Util/ContentVersions.txt` or `Util/DuckietownContentVersions.txt`, download that archive, and extract it into the matching folder:
 
 ```sh
-tar -xvzf <assets_archive>.tar.gz.tar -C ${CARLA_UE4_ROOT}$/Unreal/CarlaUE4/Content/Carla
+tar -xvzf <assets_archive>.tar.gz -C ${CARLA_UE4_ROOT}/Unreal/CarlaUE4/Content/Carla
 ```
+
+Write the ID you used into the folder's `.version` file so that the next `Update.sh` run does not immediately replace it.
 
 ---
 
-### Build CARLA with Make
+### Build with Make
 
-The following commands should be run from the root folder of the CARLA repository that you earlier downloaded or cloned with git. There are two parts to the build process for CARLA, compiling the client and compiling the server.
+The following commands should be run from the root folder of the repository. There are two parts to the build process, compiling the client and compiling the server.
 
 #### 1. Compile the Python API client
 
-The Python API client grants control over the simulation. Compilation of the Python API client is required the first time you build CARLA and again after you perform any updates. After the client is compiled, you will be able to run scripts to interact with the simulation.
+The Python API client grants control over the simulation. Compilation of the client is required the first time you build and again after you perform any updates. After the client is compiled, you will be able to run scripts to interact with the simulation.
 
 Install the Python prerequisites:
 
@@ -176,7 +213,7 @@ Install the Python prerequisites:
 python3 -m pip install --upgrade -r ${CARLA_UE4_ROOT}/PythonAPI/carla/requirements.txt
 ```
 
-Then build the Python API with the following command:
+Then build the Python API with the following command. The first run takes 20 to 30 minutes as it compiles LibCarla and its dependencies; later runs are incremental:
 
 ```sh
 make PythonAPI
@@ -223,14 +260,14 @@ Finally, run `make PythonAPI` with the Python virtual environment activated:
 (myenv): make PythonAPI
 ```
 
-The CARLA Python API wheel will be generated in `${CARLA_UE4_ROOT}/PythonAPI/carla/dist`. The name of the wheel will depend upon the current CARLA version and the chosen Python version. Install the wheel with PIP:
+The CARLA Python API wheel will be generated in `${CARLA_UE4_ROOT}/PythonAPI/carla/dist`. The name of the wheel depends on the current CARLA version and the chosen Python version. Install the wheel with PIP:
 
 ```sh
-# CARLA 0.9.16, Python 3.8
-python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp38-linux_x86_64.whl
-
 # CARLA 0.9.16, Python 3.10
-#python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp310-linux_x86_64.whl
+python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp310-cp310-linux_x86_64.whl
+
+# Or let the shell pick whichever wheel was just built
+python3 -m pip install ${CARLA_UE4_ROOT}/PythonAPI/carla/dist/carla-*.whl
 ```
 
 !!! Warning
@@ -244,7 +281,7 @@ The following command compiles and launches the Unreal Engine editor. Run this c
 make launch
 ```
 
-During the first launch, the editor may show warnings regarding shaders and mesh distance fields. These take some time to be loaded and the map will not show properly until then. Subsequent launches of the editor will be quicker.
+During the first launch the editor compiles shaders and mesh distance fields for every Duckietown map, which can take 20 minutes or more. The maps will not show properly until it finishes. Subsequent launches of the editor will be quicker.
 
 ![ue4_editor_open](img/ue4_editor_open.png)
 
@@ -255,18 +292,21 @@ During the first launch, the editor may show warnings regarding shaders and mesh
 
 Press **Play** to start the server simulation. The camera can be moved with `WASD` keys and rotated by clicking the scene while moving the mouse around.  
 
-Test the simulator using the example scripts inside `PythonAPI\examples`.  With the simulator running, open a new terminal for each script and run the following commands to spawn some life into the town and create a weather cycle:
+Test the simulator using the Duckietown scripts in `PythonAPI/duckietown`. With the simulator running, open a new terminal for each script:
 
 ```sh
-# Terminal A 
-cd ${CARLA_UE4_ROOT}/PythonAPI/examples
-python3 -m pip install -r requirements.txt
-python3 generate_traffic.py  
+# Terminal A — drive a Duckiebot, and switch maps, lighting and sensors live
+cd ${CARLA_UE4_ROOT}/PythonAPI/duckietown
+python3 manual_control.py
 
-# Terminal B
-cd ${CARLA_UE4_ROOT}/PythonAPI/examples
-python3 dynamic_weather.py 
+# Terminal B — populate the map with autopiloted Duckiebots
+cd ${CARLA_UE4_ROOT}/PythonAPI/duckietown
+python3 generate_traffic.py
 ```
+
+`manual_control.py` always spawns `vehicle.duckietown.duckiebot`. Press `H` for the full key list; `U` cycles the Duckietown maps and `J` cycles the map's HDRI lighting presets. The other two scripts are `place_duckies.py`, which scatters duckie props along the road (`--cleanup` removes them again), and `hdri_control.py`, which lists, applies and disables HDRI presets from the command line.
+
+The upstream CARLA example scripts in `PythonAPI/examples` also work, but they default to CARLA's own towns and vehicles rather than Duckietown content.
 
 !!! Important
     If the simulation is running at a very low FPS rate, go to `Edit -> Editor preferences -> Performance` in the Unreal Engine editor and disable `Use less CPU when in background`.
@@ -281,17 +321,19 @@ There are more `make` commands that you may find useful. Find them in the table 
 | ------- | ------- |
 | `make help`                                                           | Prints all available commands.                                        |
 | `make launch`                                                         | Launches CARLA server in Editor window.                               |
+| `make launch-only`                                                    | Launches the Editor without recompiling first.                        |
 | `make PythonAPI`                                                      | Builds the CARLA client.                                              |
 | `make LibCarla`                                                       | Prepares the CARLA library to be imported anywhere.                   |
-| `make package`                                                        | Builds CARLA and creates a packaged version for distribution.         |
+| `make package`                                                        | Builds CARLA and creates a packaged version for distribution in `Dist`. |
 | `make clean`                                                          | Deletes all the binaries and temporals generated by the build system. |
-| `make rebuild`                                                        | `make clean` and `make launch` both in one command.                   |
+| `make rebuild`                                                        | Removes intermediate build files and rebuilds the whole project. Does not launch the Editor. |
+| `make hard-clean`                                                     | A more thorough `make clean`; prints how to force recompiling dependencies. |
 
 ---
 
 ### Running tests
 
-CARLA's code comes with a suite of tests designed to detect regressions in fundamental functionality that might be introduced by new code changes. CARLA's CI/CD system runs these tests for each nightly build and release before uploading new packages. If you are managing your own build we recommend that you run the test suite at least periodically to detect breaking changes.
+CARLA's code comes with a suite of tests designed to detect regressions in fundamental functionality that might be introduced by new code changes. If you are managing your own build we recommend that you run the test suite at least periodically to detect breaking changes.
 
 First, create a CARLA package from your latest changes:
 
@@ -299,7 +341,7 @@ First, create a CARLA package from your latest changes:
 make package
 ```
 
-The Package will be created in the Dist folder, it will have a name dependent on the last commit, run the simulator from the newly build package. Substitute the appropriate package ID, which will depend on the latest commit:
+The package will be created in the `Dist` folder with a name dependent on the last commit. Run the simulator from the newly built package, substituting the appropriate package ID:
 
 ```sh
 ./Dist/CARLA_<package_id>/LinuxNoEditor/CarlaUE4.sh --ros2 -RenderOffScreen --carla-rpc-port=<port> --carla-streaming-port=0 -nosound
@@ -308,7 +350,7 @@ The Package will be created in the Dist folder, it will have a name dependent on
 Once the simulator is running, run the smoke tests:
 
 ```sh
-make smoke_tests ARGS="--xml --python-version=<python_version> --target-wheel-platform=manylinux_2_31_x86_64
+make smoke_tests ARGS="--xml --python-version=<python_version>"
 ```
 
 Then, finally, run the examples:
@@ -317,13 +359,13 @@ Then, finally, run the examples:
 make run-examples ARGS="localhost <port>"
 ```
 
-You will be alerted on the command line if any tests fail. You can find the smoke tests in `${CARLA_ROOT}/PythonAPI/test/smoke`. 
+You will be alerted on the command line if any tests fail. You can find the smoke tests in `${CARLA_UE4_ROOT}/PythonAPI/test/smoke`. 
 
 ---
 
-Read the **[F.A.Q.](build_faq.md)** page or post in the [CARLA forum](https://github.com/carla-simulator/carla/discussions) for any issues regarding this guide.  
+Read the **[F.A.Q.](build_faq.md)** page or post in the [upstream CARLA discussions](https://github.com/carla-simulator/carla/discussions) for any issues regarding this guide.  
 
-Up next, learn how to update the CARLA build or take your first steps in the simulation, and learn some core concepts.  
+Up next, learn how to update the build or take your first steps in the simulation, and learn some core concepts.  
 <div class="build-buttons">
 
 <p>

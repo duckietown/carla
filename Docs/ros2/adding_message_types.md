@@ -376,8 +376,8 @@ format and is unique across all registered types.
 ## Step 7 - Build and verify
 
 ```sh
-docker exec carla-development-ue4-20.04 make LibCarla ARGS="--ros2"
-docker exec carla-development-ue4-20.04 make check.LibCarla
+docker exec carla-development-ue4-22.04 make LibCarla ARGS="--ros2"
+docker exec carla-development-ue4-22.04 make check.LibCarla
 ```
 
 All tests must pass. The new `CHECK_HASH` entry will fail if the hash is

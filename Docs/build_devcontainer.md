@@ -121,9 +121,9 @@ Create a `.devcontainer/devcontainer.json` in your CARLA repository with the fol
 ```json
 {
     "name": "CARLA UE4 Dev",
-    "image": "carla-development:ue4-20.04",
+    "image": "carla-development:ue4-22.04",
 
-    "initializeCommand": "./Util/Docker/build.sh --dev --ubuntu-distro 20.04",
+    "initializeCommand": "./Util/Docker/build.sh --dev --ubuntu-distro 22.04",
 
     // We do NOT need to set "remoteUser" if the Dockerfile's default user is already correct
     // but you can if you want to be explicit. Also "updateRemoteUserUID" can be false, since
@@ -146,7 +146,7 @@ Create a `.devcontainer/devcontainer.json` in your CARLA repository with the fol
     "runArgs": [
       "--rm",
       "--runtime", "nvidia",
-      "--name", "carla-ue4-development-20.04",
+      "--name", "carla-ue4-development-22.04",
       "--env", "NVIDIA_VISIBLE_DEVICES=all",
       "--env", "NVIDIA_DRIVER_CAPABILITIES=all",
       "--env", "UE4_ROOT=/workspaces/unreal-engine",
@@ -155,7 +155,7 @@ Create a `.devcontainer/devcontainer.json` in your CARLA repository with the fol
       "--volume", "/tmp/.X11-unix:/tmp/.X11-unix",
       "--volume", "/var/run/docker.sock:/var/run/docker.sock",
       "--volume", "${localEnv:UE4_ROOT}:/workspaces/unreal-engine",
-      "--mount", "source=carla-development-ue4-20.04,target=/home/carla",
+      "--mount", "source=carla-development-ue4-22.04,target=/home/carla",
       "--gpus", "all"
     ]
 }

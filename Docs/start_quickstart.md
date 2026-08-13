@@ -19,7 +19,7 @@ The packaged version of CARLA allows you to get started quickly with the CARLA s
 
 The following requirements should be fulfilled before installing CARLA:
 
-* __Operating System__: CARLA is built for Windows **10** and **11** and Ubuntu **20.04** and **22.04**. 
+* __Operating System__: CARLA is built for Windows **10** and **11** and Ubuntu **22.04** and **26.04**. 
 * __An adequate GPU__ :We recommend a dedicated GPU equivalent to an NVIDIA 2070 or better with at least 8Gb of VRAM or more.
 * __Disk space__: CARLA will use about 20 GB of disk space.
 * __Two TCP ports__: Ports 2000 and 2001 by default. Make sure that these ports are not blocked by firewalls or any other applications.

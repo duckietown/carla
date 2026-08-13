@@ -61,7 +61,8 @@ CARLA forum</a>
 [__carlaviz — web visualizer__](plugins_carlaviz.md) — Plugin that listens the simulation and shows the scene and some simulation data in a web browser.
 
 ## Contributing to CARLA
-[__Guidelines__](cont_contribution_guidelines.md) — Guidelines on contributing to the development of the CARLA simulator and its ecosystem.   
+Contributions are welcome — open an issue or a pull request on [GitHub](https://github.com/duckietown/carla).
+
 [__Coding standards__](cont_coding_standard.md) — Details on the best coding practices when contributing to CARLA development.  
 [__Documentation standard__](cont_doc_standard.md) — Details on the documentation standards for CARLA docs.     
 
