@@ -18,12 +18,15 @@
   <a href="#prebuilt-release"><b>Prebuilt release</b></a> &nbsp;·&nbsp;
   <a href="#building-from-source"><b>Building from source</b></a> &nbsp;·&nbsp;
   <a href="#getting-started"><b>Getting started</b></a> &nbsp;·&nbsp;
+  <a href="#sample-project-duckad"><b>DuckAD</b></a> &nbsp;·&nbsp;
   <a href="#documentation"><b>Documentation</b></a>
 </p>
 
 </div>
 
 Data scarcity is the biggest bottleneck for end-to-end systems in Duckietown. Real footage is limited, and manual labeling is painstakingly slow. CARLA Duckietown solves this by providing photorealistic simulation environments equipped with modular sensors, dynamic lighting, and fully controllable traffic and props.
+For a complete example of what that enables, see [DuckAD](#sample-project-duckad) — an
+end-to-end driving model trained entirely on data from this simulator.
 
 > [!IMPORTANT]
 > **This is a modified CARLA, not an asset pack.** The simulator and the Python
@@ -237,6 +240,26 @@ python3 manual_control.py          # drive a Duckiebot
 </td>
 </tr>
 </table>
+
+---
+
+## Sample project: DuckAD
+
+<div align="center">
+<a href="https://github.com/Raining-Cloud/duckad"><img src="https://raw.githubusercontent.com/Raining-Cloud/duckad/main/assets/demo.gif" width="640" alt="DuckAD driving in CARLA Duckietown: camera view, BEV and predicted trajectory"/></a>
+</div>
+
+**[DuckAD](https://github.com/Raining-Cloud/duckad)** is our reference end-to-end driving
+pipeline built on this simulator. From a **single front camera image** and a **high-level
+navigation command**, it predicts the trajectory the Duckiebot should drive — and runs the
+exported model on a real Duckiebot. It covers the full loop:
+
+| | |
+|---|---|
+| **Expert data collection** | A rule-aware expert drives in CARLA Duckietown, recorded from three camera rigs with traffic, duckies and HDRI lighting variations. |
+| **Imitation training** | MobileNet backbone with a GRU or MLP waypoint head and a BEV auxiliary task. |
+| **Closed-loop evaluation** | Seeded, repeatable routes back in the simulator, scored on lane departures, cross-track error and junctions. |
+| **On-robot deployment** | ONNX export and a Duckietown client with a live web dashboard. |
 
 ---
 
